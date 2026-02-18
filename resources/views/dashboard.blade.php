@@ -115,8 +115,17 @@
                 <h1 class="text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">AI Resource <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-purple-500 dark:from-brand-400 dark:to-purple-400">Hub</span></h1>
             </div>
             <div class="flex gap-3">
-                <button class="glass px-5 py-2.5 rounded-xl border-black/10 dark:border-white/10 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all">Export JSON</button>
-                <button class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-xl shadow-brand-500/20 transition-all">Generate Report</button>
+                <div class="relative group">
+                    <button class="glass px-5 py-2.5 rounded-xl border-black/10 dark:border-white/10 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all flex items-center gap-2">
+                        <span>Export Data</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 glass rounded-2xl border border-black/5 dark:border-white/5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                        <a href="{{ route('larai.export', 'json') }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">EXPORT AS JSON</a>
+                        <a href="{{ route('larai.export', 'csv') }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border-t border-black/5 dark:border-white/5">EXPORT AS CSV</a>
+                        <a href="{{ route('larai.export', 'txt') }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border-t border-black/5 dark:border-white/5">EXPORT AS TXT</a>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -294,7 +303,7 @@
                     </table>
                 </div>
                 <div class="p-6 bg-black/[0.01] dark:bg-white/[0.01] text-center border-t border-black/5 dark:border-white/5">
-                    <button class="text-brand-600 dark:text-brand-500 font-bold text-xs hover:text-brand-500 transition-colors">Load Full History Explorer →</button>
+                    <a href="{{ route('larai.logs') }}" class="text-brand-600 dark:text-brand-500 font-bold text-xs hover:text-brand-500 transition-colors">Load Full History Explorer →</a>
                 </div>
             </div>
         </section>
