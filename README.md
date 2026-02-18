@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://doq9otz3zrcmp.cloudfront.net/blogs/1_1771417079_rJ7ATPHw.png" width="128" alt="Larai Tracker Logo">
+</p>
+
 # Larai Tracker 🚀
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/gometap/larai-tracker.svg?style=flat-square)](https://packagist.org/packages/gometap/larai-tracker)
@@ -6,11 +10,16 @@
 **Larai Tracker** is a powerful, standalone dashboard for tracking AI token usage and API costs in Laravel applications. It "invisibly" intercepts AI responses via Laravel's native HTTP Client events, meaning it works with **OpenAI, Gemini, Azure, and OpenRouter** out of the box with **zero code changes** to your application logic.
 
 ## Screenshots
+
 ### Dashboard
+
 ![Dark Preview](https://github.com/gometap/larai-tracker/raw/main/art/dark.png)
 ![Light Preview](https://github.com/gometap/larai-tracker/raw/main/art/light.png)
+
 ### Logs
+
 ![Logs Preview](https://github.com/gometap/larai-tracker/raw/main/art/logs.png)
+
 ## Features
 
 - 🕵️ **Invisible Tracking**: Automatically logs AI responses via Laravel's `ResponseReceived` event.

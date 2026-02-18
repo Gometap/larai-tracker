@@ -31,12 +31,7 @@ class LaraiTrackerServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'larai');
 
         if ($this->app->runningInConsole()) {
-            $migrationFileName = 'create_larai_logs_table.php';
-            $timestamp = date('Y_m_d_His');
-
-            $this->publishes([
-                __DIR__ . '/../database/migrations/create_larai_logs_table.php.stub' => database_path("migrations/{$timestamp}_{$migrationFileName}"),
-            ], 'larai-tracker-migrations');
+            $this->publishMigrations();
 
             $this->publishes([
                 __DIR__ . '/../resources/views' => resource_path('views/vendor/larai'),
@@ -44,6 +39,29 @@ class LaraiTrackerServiceProvider extends ServiceProvider
         }
 
         $this->defineGates();
+    }
+
+    /**
+     * Publish package migrations.
+     */
+    protected function publishMigrations(): void
+    {
+        $migrations = [
+            'create_larai_logs_table.php' => 'create_larai_logs_table.php',
+            'create_larai_budgets_table.php' => 'create_larai_budgets_table.php',
+            'create_larai_model_prices_table.php' => 'create_larai_model_prices_table.php',
+            'create_larai_settings_table.php' => 'create_larai_settings_table.php',
+        ];
+
+        $publishPath = [];
+        $i = 0;
+        foreach ($migrations as $stub => $file) {
+            $timestamp = date('Y_m_d_His', time() + $i);
+            $publishPath[__DIR__ . "/../database/migrations/{$stub}.stub"] = database_path("migrations/{$timestamp}_{$file}");
+            $i++;
+        }
+
+        $this->publishes($publishPath, 'larai-tracker-migrations');
     }
 
     /**

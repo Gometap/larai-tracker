@@ -29,6 +29,7 @@ class LaraiDashboardController extends Controller
                 ->orderBy('date')
                 ->limit(30)
                 ->get(),
+            'currency_symbol' => \Gometap\LaraiTracker\Models\LaraiSetting::get('currency_symbol', '$'),
         ];
 
         return view('larai::dashboard', compact('stats'));
@@ -64,8 +65,9 @@ class LaraiDashboardController extends Controller
 
         $logs = $query->paginate(20)->withQueryString();
         $providers = LaraiLog::select('provider')->distinct()->pluck('provider');
+        $currency_symbol = \Gometap\LaraiTracker\Models\LaraiSetting::get('currency_symbol', '$');
 
-        return view('larai::logs', compact('logs', 'providers'));
+        return view('larai::logs', compact('logs', 'providers', 'currency_symbol'));
     }
 
     public function export($format)
@@ -122,5 +124,101 @@ class LaraiDashboardController extends Controller
             default:
                 abort(404);
         }
+    }
+
+    /**
+     * Display the settings page.
+     */
+    public function settings()
+    {
+        if (Gate::denies('viewLaraiTracker')) {
+            abort(403);
+        }
+
+        $budget = \Gometap\LaraiTracker\Models\LaraiBudget::first() ?? new \Gometap\LaraiTracker\Models\LaraiBudget([
+            'amount' => 100,
+            'alert_threshold' => 80,
+            'is_active' => false
+        ]);
+
+        $customPrices = \Gometap\LaraiTracker\Models\LaraiModelPrice::all();
+        $currency = [
+            'code' => \Gometap\LaraiTracker\Models\LaraiSetting::get('currency_code', 'USD'),
+            'symbol' => \Gometap\LaraiTracker\Models\LaraiSetting::get('currency_symbol', '$'),
+        ];
+
+        return view('larai::settings', compact('budget', 'customPrices', 'currency'));
+    }
+
+    /**
+     * Update budget and cost settings.
+     */
+    public function updateSettings(Request $request)
+    {
+        if (Gate::denies('viewLaraiTracker')) {
+            abort(403);
+        }
+
+        // Budget
+        $budgetData = $request->input('budget', []);
+        $budget = \Gometap\LaraiTracker\Models\LaraiBudget::first() ?? new \Gometap\LaraiTracker\Models\LaraiBudget();
+        $budget->fill([
+            'amount' => $budgetData['amount'] ?? 0,
+            'alert_threshold' => $budgetData['threshold'] ?? 80,
+            'recipient_email' => $budgetData['email'] ?? null,
+            'is_active' => isset($budgetData['active']),
+        ])->save();
+
+        // General Settings (Currency)
+        if ($request->has('currency')) {
+            \Gometap\LaraiTracker\Models\LaraiSetting::set('currency_code', $request->input('currency.code', 'USD'));
+            \Gometap\LaraiTracker\Models\LaraiSetting::set('currency_symbol', $request->input('currency.symbol', '$'));
+        }
+
+        // Custom Prices
+        $pricesData = $request->input('prices', []);
+        foreach ($pricesData as $id => $data) {
+            $price = \Gometap\LaraiTracker\Models\LaraiModelPrice::find($id);
+            if ($price) {
+                $price->update([
+                    'input_price_per_1m' => $data['input'],
+                    'output_price_per_1m' => $data['output'],
+                    'is_custom' => true,
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Settings updated successfully.');
+    }
+
+    /**
+     * Sync prices from Gometap's central registry.
+     */
+    public function syncPrices()
+    {
+        if (Gate::denies('viewLaraiTracker')) {
+            abort(403);
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::get('https://raw.githubusercontent.com/gometap/larai-tracker/main/resources/data/prices.json');
+            
+            if ($response->successful()) {
+                $prices = $response->json();
+                foreach ($prices as $item) {
+                    \Gometap\LaraiTracker\Models\LaraiModelPrice::updateOrCreate(
+                        ['provider' => $item['provider'], 'model' => $item['model']],
+                        [
+                            'input_price_per_1m' => $item['input_price_per_1m'],
+                            'output_price_per_1m' => $item['output_price_per_1m'],
+                            'is_custom' => false,
+                        ]
+                    );
+                }
+                return redirect()->back()->with('success', 'Prices synchronized successfully.');
+            }
+        } catch (\Exception $e) {}
+
+        return redirect()->back()->with('error', 'Failed to synchronize prices.');
     }
 }

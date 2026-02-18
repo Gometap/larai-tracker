@@ -81,8 +81,8 @@
     <nav class="sticky top-0 z-50 px-6 py-4 glass mb-8 border-b border-black/5 dark:border-white/5">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-tr from-brand-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-brand-500/20">
+                    <img src="https://doq9otz3zrcmp.cloudfront.net/blogs/1_1771417079_rJ7ATPHw.png" alt="Larai Tracker" class="w-full h-full object-cover">
                 </div>
                 <div>
                     <span class="text-xl font-extrabold tracking-tight">Larai<span class="text-brand-500">Tracker</span></span>
@@ -93,11 +93,16 @@
                  <a href="https://github.com/gometap/larai-tracker" class="text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-white transition-colors cursor-pointer">Github</a>
                  <a href="https://github.com/gometap/larai-tracker/blob/main/CHANGELOG.md" class="text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-white transition-colors cursor-pointer">Changelog</a>
                 
-                <!-- Theme Toggle -->
-                <button onclick="toggleTheme()" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-500 dark:text-slate-400">
-                    <svg id="theme-icon-dark" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1m-16 0h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.929 7.929l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
-                    <svg id="theme-icon-light" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                </button>
+                <!-- Settings & Theme -->
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('larai.settings') }}" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-500 dark:text-slate-400 group" title="Configuration">
+                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </a>
+                    <button onclick="toggleTheme()" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-500 dark:text-slate-400">
+                        <svg id="theme-icon-dark" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1m-16 0h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.929 7.929l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                        <svg id="theme-icon-light" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </button>
+                </div>
 
                 <div class="h-6 w-px bg-black/10 dark:bg-white/10 mx-2"></div>
                 <div class="flex items-center gap-2 glass px-4 py-2 rounded-full border-black/10 dark:border-white/10">
@@ -142,7 +147,7 @@
                     <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Overall</span>
                 </div>
                 <h3 class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Total Investment</h3>
-                <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">${{ number_format($stats['total_cost'], 4) }}</p>
+                <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{{ $stats['currency_symbol'] }}{{ number_format($stats['total_cost'], 4) }}</p>
                 <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
                     <span class="text-emerald-500 font-bold">↑ 12%</span>
                     <span>vs last month</span>
@@ -159,7 +164,7 @@
                     <span class="text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Today</span>
                 </div>
                 <h3 class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Daily Burn Rate</h3>
-                <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">${{ number_format($stats['today_cost'], 4) }}</p>
+                <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{{ $stats['currency_symbol'] }}{{ number_format($stats['today_cost'], 4) }}</p>
                 <div class="mt-4 flex items-center gap-2 text-xs text-brand-600 dark:text-brand-400">
                     <span class="font-bold">Real-time</span>
                     <span class="text-slate-500">updating automatically</span>
@@ -234,7 +239,7 @@
                             <span class="w-2 h-2 rounded-full" style="background-color: {{ ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][$loop->index % 5] }}"></span>
                             <span class="font-mono text-slate-600 dark:text-slate-400">{{ $model->model }}</span>
                         </div>
-                        <span class="font-bold text-slate-900 dark:text-white">${{ number_format($model->cost, 4) }}</span>
+                        <span class="font-bold text-slate-900 dark:text-white">{{ $stats['currency_symbol'] }}{{ number_format($model->cost, 4) }}</span>
                     </div>
                     @endforeach
                  </div>

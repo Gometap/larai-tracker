@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Larai Tracker | Invisible AI Tracking for Laravel</title>
+    <meta
+      name="description"
+      content="A professional, standalone dashboard for tracking AI usage and costs in Laravel with zero configuration."
+    />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script
+      defer
+      src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"
+    ></script>
+    <script
+      defer
+      src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Plus Jakarta Sans", "sans-serif"] },
+            colors: {
+              brand: {
+                50: "#f0f4ff",
+                100: "#e0e9ff",
+                200: "#c0d2ff",
+                300: "#a0bcff",
+                400: "#7094ff",
+                500: "#3b82f6",
+                600: "#2563eb",
+                700: "#1d4ed8",
+                800: "#1e40af",
+                900: "#1e3a8a",
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+
+      body {
+        background-color: #020617;
+        color: #f8fafc;
+        background-image:
+          radial-gradient(
+            at 0% 0%,
+            hsla(215, 98%, 61%, 0.08) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 100% 0%,
+            hsla(263, 70%, 50%, 0.08) 0px,
+            transparent 50%
+          );
+      }
+
+      .glass {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+
+      .hero-gradient {
+        background: radial-gradient(
+          circle at center,
+          rgba(59, 130, 246, 0.15) 0%,
+          transparent 70%
+        );
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      pre {
+        background: rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .typing-cursor::after {
+        content: "|";
+        animation: blink 1s step-end infinite;
+      }
+
+      @keyframes blink {
+        from,
+        to {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="selection:bg-brand-500 selection:text-white">
+    <!-- Navbar -->
+    <nav
+      class="fixed top-0 w-full z-50 px-6 py-4 glass border-b border-white/5"
+    >
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-brand-500/20"
+          >
+            <img
+              src="https://doq9otz3zrcmp.cloudfront.net/blogs/1_1771417079_rJ7ATPHw.png"
+              alt="Larai Tracker"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <span class="text-xl font-extrabold tracking-tight"
+              >Larai<span class="text-brand-500">Tracker</span></span
+            >
+            <span
+              class="block text-[10px] uppercase tracking-widest text-slate-400 font-bold"
+              >Open Source</span
+            >
+          </div>
+        </div>
+
+        <div class="hidden md:flex items-center gap-8 text-sm font-semibold">
+          <a
+            href="#features"
+            class="text-slate-400 hover:text-white transition-colors"
+            >Features</a
+          >
+          <a
+            href="#installation"
+            class="text-slate-400 hover:text-white transition-colors"
+            >Installation</a
+          >
+          <a
+            href="https://github.com/gometap/larai-tracker"
+            class="text-slate-400 hover:text-white transition-colors"
+            >GitHub</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-40 pb-20 px-6 overflow-hidden">
+      <div class="absolute inset-0 hero-gradient -z-10"></div>
+      <div class="max-w-5xl mx-auto text-center reveal" id="hero">
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-bold uppercase tracking-widest mb-6"
+        >
+          <span class="relative flex h-2 w-2">
+            <span
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"
+            ></span>
+            <span
+              class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"
+            ></span>
+          </span>
+          Now in Public Beta
+        </div>
+        <h1
+          class="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-tight"
+        >
+          AI Tracking, <br />
+          <span
+            class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-purple-400 to-pink-400"
+            >Completely Invisible.</span
+          >
+        </h1>
+        <p
+          class="text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed font-medium"
+        >
+          Monitor token usage, calculate real-time costs, and manage all your AI
+          providers with zero changes to your actual code logic.
+        </p>
+
+        <!-- Quick Install -->
+        <div class="max-w-md mx-auto relative group mb-12">
+          <div
+            class="absolute -inset-1 bg-gradient-to-r from-brand-500 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"
+          ></div>
+          <div
+            class="relative glass rounded-2xl p-4 flex items-center justify-between font-mono text-sm"
+          >
+            <span class="text-brand-400"
+              >$
+              <span class="text-slate-300"
+                >composer require gometap/larai-tracker</span
+              ></span
+            >
+            <button
+              onclick="copyInstall()"
+              class="hover:text-brand-400 transition-colors"
+            >
+              <i data-lucide="copy" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-4">
+          <a
+            href="#installation"
+            class="px-8 py-4 bg-white text-slate-900 font-extrabold rounded-2xl hover:scale-105 transition-all shadow-xl"
+            >Get Started Free</a
+          >
+          <a
+            href="https://github.com/gometap/larai-tracker"
+            class="px-8 py-4 glass border-white/10 font-extrabold rounded-2xl hover:bg-white/5 transition-all flex items-center gap-2"
+          >
+            <i data-lucide="github" class="w-5 h-5"></i> View Source
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Section -->
+    <section class="py-24 px-6" id="features">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Card 1 -->
+          <div
+            class="glass p-8 rounded-[2.5rem] reveal"
+            style="transition-delay: 100ms"
+          >
+            <div
+              class="w-14 h-14 bg-brand-500/10 rounded-2xl flex items-center justify-center text-brand-400 mb-6"
+            >
+              <i data-lucide="eye-off" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">Zero Configuration</h3>
+            <p class="text-slate-400 leading-relaxed">
+              It intercepts responses via Laravel's native HTTP events. No need
+              to wrap your API calls or change provider logic.
+            </p>
+          </div>
+
+          <!-- Card 2 -->
+          <div
+            class="glass p-8 rounded-[2.5rem] reveal"
+            style="transition-delay: 200ms"
+          >
+            <div
+              class="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-400 mb-6"
+            >
+              <i data-lucide="bar-chart-3" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">Live Dashboard</h3>
+            <p class="text-slate-400 leading-relaxed">
+              A high-end standalone dashboard to visualize costs, burn rates,
+              and execution history across your entire stack.
+            </p>
+          </div>
+
+          <!-- Card 3 -->
+          <div
+            class="glass p-8 rounded-[2.5rem] reveal"
+            style="transition-delay: 300ms"
+          >
+            <div
+              class="w-14 h-14 bg-pink-500/10 rounded-2xl flex items-center justify-center text-pink-400 mb-6"
+            >
+              <i data-lucide="coins" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">Cost Intelligence</h3>
+            <p class="text-slate-400 leading-relaxed">
+              Built-in pricing for GPT-4o, Gemini, Azure, and Anthropic. Export
+              data to CSV/JSON for your accounting needs.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="py-24 px-6 bg-white/[0.02]">
+      <div
+        class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center"
+      >
+        <div class="reveal">
+          <h2
+            class="text-slate-500 font-bold uppercase tracking-widest text-sm mb-4"
+          >
+            Under the hood
+          </h2>
+          <h3 class="text-5xl font-black mb-6 leading-tight">
+            The "Invisible" <br />
+            <span class="text-brand-500">Interception Engine</span>
+          </h3>
+          <p class="text-lg text-slate-400 mb-8 leading-relaxed">
+            Most trackers require you to use their SDK or wrap your client.
+            Larai Tracker hooks directly into Laravel's
+            <code>ResponseReceived</code> event, parsing token headers and body
+            data in the background.
+          </p>
+          <ul class="space-y-4">
+            <li class="flex items-center gap-3 text-slate-300 font-semibold">
+              <i data-lucide="check-circle" class="w-5 h-5 text-brand-500"></i>
+              Works with OpenAI, Gemini, Claude, and more
+            </li>
+            <li class="flex items-center gap-3 text-slate-300 font-semibold">
+              <i data-lucide="check-circle" class="w-5 h-5 text-brand-500"></i>
+              Zero performance overhead (Asynchronous processing)
+            </li>
+            <li class="flex items-center gap-3 text-slate-300 font-semibold">
+              <i data-lucide="check-circle" class="w-5 h-5 text-brand-500"></i>
+              Secure, single-table database architecture
+            </li>
+          </ul>
+        </div>
+        <div class="relative reveal" style="transition-delay: 200ms">
+          <div
+            class="absolute -inset-4 bg-brand-500/20 rounded-[3rem] blur-3xl"
+          ></div>
+          <div class="relative glass rounded-[2.5rem] p-8 overflow-hidden">
+            <div class="flex gap-2 mb-6">
+              <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
+              <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+              <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
+            </div>
+            <pre class="rounded-xl p-6 font-mono text-xs overflow-x-auto">
+<span class="text-purple-400">// No changes to your code!</span>
+Http::withToken(config('openai.key'))
+    ->post('https://api.openai.com/v1/chat/completions', [
+        'model' => 'gpt-4o',
+        'messages' => [['role' => 'user', 'content' => 'Hello!']]
+    ]);
+
+<span class="text-emerald-400">// Larai Tracker automatically captures:</span>
+<span class="text-slate-400"># Model: gpt-4o</span>
+<span class="text-slate-400"># Tokens: 42 Prompt / 128 Completion</span>
+<span class="text-slate-400"># Cost: $0.00342 (Auto-calculated)</span></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Installation -->
+    <section class="py-24 px-6" id="installation">
+      <div class="max-w-3xl mx-auto text-center reveal">
+        <h2 class="text-4xl font-black mb-12">Install in Seconds</h2>
+        <div class="space-y-6 text-left">
+          <div class="glass p-6 rounded-2xl">
+            <p
+              class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3"
+            >
+              1. Add via Composer
+            </p>
+            <div
+              class="bg-black/40 rounded-xl p-4 font-mono text-sm text-brand-400"
+            >
+              composer require gometap/larai-tracker
+            </div>
+          </div>
+          <div class="glass p-6 rounded-2xl">
+            <p
+              class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3"
+            >
+              2. Run Migrations
+            </p>
+            <div
+              class="bg-black/40 rounded-xl p-4 font-mono text-sm text-slate-300"
+            >
+              php artisan migrate
+            </div>
+          </div>
+          <div class="glass p-6 rounded-2xl">
+            <p
+              class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3"
+            >
+              3. Done!
+            </p>
+            <p class="text-slate-400 text-sm">
+              Access your dashboard at <code>/larai-tracker</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-32 px-6">
+      <div
+        class="max-w-5xl mx-auto glass rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden reveal"
+      >
+        <div
+          class="absolute -right-20 -top-20 w-80 h-80 bg-brand-500/20 rounded-full blur-3xl"
+        ></div>
+        <div
+          class="absolute -left-20 -bottom-20 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl"
+        ></div>
+
+        <h2 class="text-4xl md:text-6xl font-black mb-8">
+          Ready to control <br />
+          your AI Burn Rate?
+        </h2>
+        <div class="flex flex-wrap justify-center gap-6">
+          <a
+            href="https://github.com/gometap/larai-tracker"
+            class="px-10 py-5 bg-brand-600 hover:bg-brand-500 text-white font-black rounded-[2rem] shadow-2xl shadow-brand-600/30 transition-all hover:scale-105"
+            >Deploy Now</a
+          >
+          <a
+            href="https://opensource.gometap.com"
+            class="px-10 py-5 glass border-white/10 font-bold rounded-[2rem] hover:bg-white/5 transition-all"
+            >Support Gometap</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-20 px-6 border-t border-white/5 reveal">
+      <div
+        class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8"
+      >
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <div
+              class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center"
+            >
+              <img
+                src="https://doq9otz3zrcmp.cloudfront.net/blogs/1_1771417079_rJ7ATPHw.png"
+                alt="Larai Tracker"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <span class="text-xl font-extrabold tracking-tight italic"
+              >Larai<span class="text-brand-500">Tracker</span></span
+            >
+          </div>
+          <p class="text-slate-500 text-sm max-w-sm">
+            A Gometap Group Open Source Initiative. Built with ❤️ for the
+            Laravel Community.
+          </p>
+        </div>
+        <div class="flex gap-12">
+          <div class="flex flex-col gap-3 text-sm">
+            <span class="font-bold text-white uppercase tracking-widest text-xs"
+              >Resources</span
+            >
+            <a
+              href="https://github.com/gometap/larai-tracker"
+              class="text-slate-500 hover:text-white transition-colors"
+              >GitHub Repository</a
+            >
+            <a
+              href="https://github.com/gometap/larai-tracker/blob/main/CHANGELOG.md"
+              class="text-slate-500 hover:text-white transition-colors"
+              >Changelog</a
+            >
+            <a
+              href="https://github.com/gometap/larai-tracker/issues"
+              class="text-slate-500 hover:text-white transition-colors"
+              >Support Issues</a
+            >
+          </div>
+          <div class="flex flex-col gap-3 text-sm">
+            <span class="font-bold text-white uppercase tracking-widest text-xs"
+              >More from Gometap</span
+            >
+            <a
+              href="https://opensource.gometap.com"
+              class="text-slate-500 hover:text-white transition-colors"
+              >Open Source Portfolio</a
+            >
+            <a
+              href="https://gometap.com"
+              class="text-slate-500 hover:text-white transition-colors"
+              >Official Website</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      lucide.createIcons();
+
+      function copyInstall() {
+        navigator.clipboard.writeText("composer require gometap/larai-tracker");
+        alert("Composer command copied!");
+      }
+
+      // Reveal animations
+      const observerOptions = {
+        threshold: 0.1,
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("active");
+          }
+        });
+      }, observerOptions);
+
+      document
+        .querySelectorAll(".reveal")
+        .forEach((el) => observer.observe(el));
+    </script>
+  </body>
+</html>
