@@ -74,7 +74,7 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## Credits
 
-- [danni](https://github.com/nguyendo)
+- [danni](https://github.com/Danni2901)
 - [Gometap Group](https://github.com/gometap)
 
 ## License
