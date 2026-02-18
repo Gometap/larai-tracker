@@ -60,6 +60,7 @@
             border: 1px solid rgba(0, 0, 0, 0.05);
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             transition: all 0.3s ease;
+            position: relative;
         }
         .dark .glass { 
             background: rgba(15, 23, 42, 0.6); 
@@ -115,7 +116,7 @@
                 <h1 class="text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">AI Resource <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-purple-500 dark:from-brand-400 dark:to-purple-400">Hub</span></h1>
             </div>
             <div class="flex gap-3">
-                <div class="relative group">
+                <div class="relative group z-[100]">
                     <button class="glass px-5 py-2.5 rounded-xl border-black/10 dark:border-white/10 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all flex items-center gap-2">
                         <span>Export Data</span>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
