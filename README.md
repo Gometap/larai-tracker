@@ -5,7 +5,9 @@
 
 **Larai Tracker** is a powerful, standalone dashboard for tracking AI token usage and API costs in Laravel applications. It "invisibly" intercepts AI responses via Laravel's native HTTP Client events, meaning it works with **OpenAI, Gemini, Azure, and OpenRouter** out of the box with **zero code changes** to your application logic.
 
-![Dashboard Preview](https://github.com/gometap/larai-tracker/raw/main/art/dashboard.png)
+## Screenshots
+![Dark Preview](https://github.com/gometap/larai-tracker/raw/main/art/dark.png)
+![Light Preview](https://github.com/gometap/larai-tracker/raw/main/art/light.png)
 
 ## Features
 
