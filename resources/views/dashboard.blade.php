@@ -110,7 +110,7 @@
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
         <!-- Dashboard Header -->
-        <header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 reveal" id="header-reveal">
+        <header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 reveal relative z-10" id="header-reveal">
             <div>
                 <h2 class="text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-widest text-xs mb-2">Overview</h2>
                 <h1 class="text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">AI Resource <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-purple-500 dark:from-brand-400 dark:to-purple-400">Hub</span></h1>

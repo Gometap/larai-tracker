@@ -34,7 +34,7 @@
     <style>
         body { background-color: #f8fafc; color: #0f172a; transition: background-color 0.3s ease, color 0.3s ease; }
         .dark body { background-color: #020617; color: #f8fafc; background-image: radial-gradient(at 0% 0%, hsla(215,98%,61%,0.07) 0px, transparent 50%), radial-gradient(at 100% 0%, hsla(263,70%,50%,0.07) 0px, transparent 50%); }
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); transition: all 0.3s ease; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); transition: all 0.3s ease; position: relative; }
         .dark .glass { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
         .reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
@@ -73,7 +73,7 @@
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
         <!-- Header -->
-        <header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 reveal">
+        <header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 reveal relative z-10">
             <div>
                 <h2 class="text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-widest text-xs mb-2">History Management</h2>
                 <h1 class="text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">Log <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-purple-500 dark:from-brand-400 dark:to-purple-400">Explorer</span></h1>
