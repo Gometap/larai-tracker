@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('larai_logs', function (Blueprint $blueprint) {
+            $blueprint->id();
+            $blueprint->unsignedBigInteger('user_id')->nullable()->index();
+            $blueprint->string('provider')->index();
+            $blueprint->string('model')->index();
+            $blueprint->integer('prompt_tokens')->default(0);
+            $blueprint->integer('completion_tokens')->default(0);
+            $blueprint->integer('total_tokens')->default(0);
+            $blueprint->decimal('cost_usd', 15, 8)->default(0);
+            $blueprint->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('larai_logs');
+    }
+};

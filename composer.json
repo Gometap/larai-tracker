@@ -1,0 +1,40 @@
+{
+    "name": "gometap/larai-tracker",
+    "description": "A standalone dashboard to track AI token usage and API costs for Laravel applications.",
+    "type": "library",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "danni",
+            "email": "contact@nguyendo.id.vn"
+        }
+    ],
+    "require": {
+        "illuminate/support": "^10.0|^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Gometap\\LaraiTracker\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gometap\\LaraiTracker\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gometap\\LaraiTracker\\LaraiTrackerServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
