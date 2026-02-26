@@ -80,13 +80,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require \
-            "laravel/framework:${{ matrix.laravel }}" \
-            "orchestra/testbench:${{ matrix.testbench }}" \
-            "pestphp/pest:${{ matrix.pest }}" \
-            "pestphp/pest-plugin-laravel:${{ matrix.pest_laravel }}" \
-            --no-interaction --no-update
-          composer update --prefer-dist --no-interaction --prefer-stable
+          composer update --prefer-dist --no-interaction --prefer-stable \
+            --with "laravel/framework:${{ matrix.laravel }}" \
+            --with "orchestra/testbench:${{ matrix.testbench }}" \
+            --with "pestphp/pest:${{ matrix.pest }}" \
+            --with "pestphp/pest-plugin-laravel:${{ matrix.pest_laravel }}"
 
       - name: Execute tests
         run: vendor/bin/pest
