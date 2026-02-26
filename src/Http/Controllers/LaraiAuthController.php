@@ -6,6 +6,7 @@ use Gometap\LaraiTracker\Models\LaraiSetting;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 
 class LaraiAuthController extends Controller
 {
@@ -20,8 +21,11 @@ class LaraiAuthController extends Controller
         }
 
         $setupRequired = $request->session()->get('setup_required', false);
+        $throttleKey   = $this->throttleKey($request);
+        $isLocked      = RateLimiter::tooManyAttempts($throttleKey, config('larai-tracker.max_attempts', 5));
+        $secondsLeft   = $isLocked ? RateLimiter::availableIn($throttleKey) : 0;
 
-        return view('larai::login', compact('setupRequired'));
+        return view('larai::login', compact('setupRequired', 'isLocked', 'secondsLeft'));
     }
 
     /**
@@ -29,6 +33,21 @@ class LaraiAuthController extends Controller
      */
     public function login(Request $request)
     {
+        $throttleKey = $this->throttleKey($request);
+        $maxAttempts = config('larai-tracker.max_attempts', 5);
+        $lockoutMins = config('larai-tracker.lockout_minutes', 15);
+        $lockoutSecs = $lockoutMins * 60;
+
+        // Check if locked out
+        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $minutes = ceil($seconds / 60);
+
+            return back()->withErrors([
+                'password' => "Too many failed attempts. Please try again in {$minutes} minute(s).",
+            ]);
+        }
+
         $password = $this->getPassword();
 
         // Initial setup: no password exists yet → set one
@@ -40,6 +59,7 @@ class LaraiAuthController extends Controller
             LaraiSetting::set('dashboard_password', Hash::make($request->input('password')));
 
             $this->authenticate($request);
+            RateLimiter::clear($throttleKey);
 
             return redirect()->route('larai.dashboard')
                 ->with('success', 'Password has been set successfully!');
@@ -51,13 +71,27 @@ class LaraiAuthController extends Controller
         ]);
 
         if ($this->verifyPassword($request->input('password'), $password)) {
+            // Clear rate limiter on successful login
+            RateLimiter::clear($throttleKey);
             $this->authenticate($request);
 
             return redirect()->route('larai.dashboard');
         }
 
+        // Increment the rate limiter for failed attempts
+        RateLimiter::hit($throttleKey, $lockoutSecs);
+
+        $remaining = $maxAttempts - RateLimiter::attempts($throttleKey);
+
+        if ($remaining <= 0) {
+            $minutes = $lockoutMins;
+            return back()->withErrors([
+                'password' => "Too many failed attempts. Please try again in {$minutes} minute(s).",
+            ]);
+        }
+
         return back()->withErrors([
-            'password' => 'The password is incorrect.',
+            'password' => "The password is incorrect. {$remaining} attempt(s) remaining.",
         ]);
     }
 
@@ -69,6 +103,14 @@ class LaraiAuthController extends Controller
         $request->session()->forget(['larai_authenticated', 'larai_auth_time']);
 
         return redirect()->route('larai.auth.login');
+    }
+
+    /**
+     * Generate a unique throttle key per IP.
+     */
+    protected function throttleKey(Request $request): string
+    {
+        return 'larai_login|' . $request->ip();
     }
 
     /**
