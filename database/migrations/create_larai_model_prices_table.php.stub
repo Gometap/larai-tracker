@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::create('larai_model_prices', function (Blueprint $table) {
+            $table->id();
+            $table->string('provider');
+            $table->string('model');
+            $table->decimal('input_price_per_1m', 15, 4);
+            $table->decimal('output_price_per_1m', 15, 4);
+            $table->boolean('is_custom')->default(false);
+            $table->timestamps();
+
+            $table->unique(['provider', 'model']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('larai_model_prices');
+    }
+};

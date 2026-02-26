@@ -1,0 +1,85 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Laravel 10 (PHP 8.2 - 8.3) → Testbench 8, Pest 2
+          - php: 8.2
+            laravel: "10.*"
+            testbench: "^8.0"
+            pest: "^2.34"
+            pest_laravel: "^2.3"
+          - php: 8.3
+            laravel: "10.*"
+            testbench: "^8.0"
+            pest: "^2.34"
+            pest_laravel: "^2.3"
+
+          # Laravel 11 (PHP 8.2 - 8.4) → Testbench 9, Pest 2
+          - php: 8.2
+            laravel: "11.*"
+            testbench: "^9.0"
+            pest: "^2.34"
+            pest_laravel: "^2.3"
+          - php: 8.3
+            laravel: "11.*"
+            testbench: "^9.0"
+            pest: "^2.34"
+            pest_laravel: "^2.3"
+          - php: 8.4
+            laravel: "11.*"
+            testbench: "^9.0"
+            pest: "^2.34"
+            pest_laravel: "^2.3"
+
+          # Laravel 12 (PHP 8.3 - 8.4) → Testbench 10, Pest 3
+          - php: 8.3
+            laravel: "12.*"
+            testbench: "^10.0"
+            pest: "^3.0"
+            pest_laravel: "^3.0"
+          - php: 8.4
+            laravel: "12.*"
+            testbench: "^10.0"
+            pest: "^3.0"
+            pest_laravel: "^3.0"
+
+    name: P${{ matrix.php }} - L${{ matrix.laravel }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, readline
+          coverage: none
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-composer-${{ hashFiles('**/composer.json') }}
+
+      - name: Install dependencies
+        run: |
+          composer update --prefer-dist --no-interaction --prefer-stable \
+            --with "laravel/framework:${{ matrix.laravel }}" \
+            --with "orchestra/testbench:${{ matrix.testbench }}" \
+            --with "pestphp/pest:${{ matrix.pest }}" \
+            --with "pestphp/pest-plugin-laravel:${{ matrix.pest_laravel }}"
+
+      - name: Execute tests
+        run: vendor/bin/pest
