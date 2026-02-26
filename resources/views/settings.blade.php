@@ -53,11 +53,15 @@
                     </div>
                 </a>
             </div>
-            <div class="flex items-center gap-6 text-sm font-medium">
+            <div class="flex items-center gap-3 text-sm font-medium">
                 <button onclick="toggleTheme()" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-500 dark:text-slate-400">
                     <svg id="theme-icon-dark" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1m-16 0h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.929 7.929l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
                     <svg id="theme-icon-light" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
+                <div class="h-6 w-px bg-black/10 dark:bg-white/10"></div>
+                <a href="{{ route('larai.auth.logout') }}" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all text-slate-500 dark:text-slate-400 hover:text-red-500" title="Sign Out">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                </a>
             </div>
         </div>
     </nav>
@@ -127,6 +131,43 @@
                         </h3>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">Fetch the latest unit prices for all AI models from Gometap's central price registry.</p>
                         <button type="submit" formaction="{{ route('larai.sync-prices') }}" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-brand-500/20 active:scale-95">Sync Global Prices</button>
+                    </section>
+
+                    <!-- Security Section -->
+                    <section class="glass p-8 rounded-[2.5rem] reveal active">
+                        <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            Security
+                        </h3>
+
+                        @if(session('password_success'))
+                            <div class="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                                {{ session('password_success') }}
+                            </div>
+                        @endif
+                        @if(session('password_error'))
+                            <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 dark:text-red-400 font-bold text-xs">
+                                {{ session('password_error') }}
+                            </div>
+                        @endif
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Current Password</label>
+                                <input type="password" name="security[current_password]" placeholder="••••••••" class="w-full glass bg-transparent px-4 py-3 rounded-xl border-black/10 dark:border-white/10 outline-none focus:ring-2 focus:ring-brand-500/50">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">New Password</label>
+                                <input type="password" name="security[new_password]" placeholder="Min 6 characters" class="w-full glass bg-transparent px-4 py-3 rounded-xl border-black/10 dark:border-white/10 outline-none focus:ring-2 focus:ring-brand-500/50">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Confirm New Password</label>
+                                <input type="password" name="security[new_password_confirmation]" placeholder="••••••••" class="w-full glass bg-transparent px-4 py-3 rounded-xl border-black/10 dark:border-white/10 outline-none focus:ring-2 focus:ring-brand-500/50">
+                            </div>
+                            <p class="text-[10px] text-slate-400 dark:text-slate-600 leading-relaxed">
+                                Leave blank if you don't want to change the password. Password set here takes priority over ENV/config.
+                            </p>
+                        </div>
                     </section>
                 </div>
 
