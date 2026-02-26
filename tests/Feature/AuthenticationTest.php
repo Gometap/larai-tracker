@@ -15,7 +15,7 @@ test('it allows access in local environment without password', function () {
 });
 
 test('it redirects to login if setup is required in non-local', function () {
-    app()->detectEnvironment(fn() => 'production');
+    config()->set('app.env', 'production');
     config()->set('larai-tracker.password', null);
     
     $this->get(route('larai.dashboard'))
@@ -24,8 +24,8 @@ test('it redirects to login if setup is required in non-local', function () {
 });
 
 test('it can set up initial password', function () {
-    app()->detectEnvironment(fn() => 'production');
-    
+    config()->set('app.env', 'production');
+    config()->set('larai-tracker.session_lifetime', 120);
     $this->post(route('larai.auth.login.submit'), [
         'password' => 'new-password',
         'password_confirmation' => 'new-password',
@@ -37,8 +37,7 @@ test('it can set up initial password', function () {
 });
 
 test('it validates password setup', function () {
-    app()->detectEnvironment(fn() => 'production');
-    
+    config()->set('app.env', 'production');
     $this->post(route('larai.auth.login.submit'), [
         'password' => 'short',
         'password_confirmation' => 'mismatch',
@@ -46,9 +45,9 @@ test('it validates password setup', function () {
 });
 
 test('it can login with correct password from config', function () {
-    app()->detectEnvironment(fn() => 'production');
+    config()->set('app.env', 'production');
     config()->set('larai-tracker.password', 'config-secret');
-    
+    config()->set('larai-tracker.session_lifetime', 120);
     $this->post(route('larai.auth.login.submit'), [
         'password' => 'config-secret',
     ])->assertRedirect(route('larai.dashboard'));
@@ -57,9 +56,9 @@ test('it can login with correct password from config', function () {
 });
 
 test('it can login with correct password from database', function () {
-    app()->detectEnvironment(fn() => 'production');
+    config()->set('app.env', 'production');
     LaraiSetting::set('dashboard_password', Hash::make('db-secret'));
-    
+    config()->set('larai-tracker.session_lifetime', 120);
     $this->post(route('larai.auth.login.submit'), [
         'password' => 'db-secret',
     ])->assertRedirect(route('larai.dashboard'));
@@ -68,9 +67,8 @@ test('it can login with correct password from database', function () {
 });
 
 test('it fails login with wrong password', function () {
-    app()->detectEnvironment(fn() => 'production');
+    config()->set('app.env', 'production');
     config()->set('larai-tracker.password', 'correct-password');
-    
     $this->post(route('larai.auth.login.submit'), [
         'password' => 'wrong-password',
     ])->assertSessionHasErrors(['password']);
@@ -88,17 +86,17 @@ test('it can logout', function () {
 });
 
 test('it protects dashboard routes from unauthenticated users', function () {
-    app()->detectEnvironment(fn() => 'production');
+    config()->set('app.env', 'production');
     config()->set('larai-tracker.password', 'secret');
-    
     $this->get(route('larai.dashboard'))->assertRedirect(route('larai.auth.login'));
     $this->get(route('larai.settings'))->assertRedirect(route('larai.auth.login'));
     $this->get(route('larai.logs'))->assertRedirect(route('larai.auth.login'));
 });
 
 test('it can change password from settings', function () {
-    app()->detectEnvironment(fn() => 'production');
+    config()->set('app.env', 'production');
     LaraiSetting::set('dashboard_password', Hash::make('old-password'));
+    config()->set('larai-tracker.session_lifetime', 120);
     Session::put('larai_authenticated', true);
     Session::put('larai_auth_time', time());
     
@@ -114,8 +112,9 @@ test('it can change password from settings', function () {
 });
 
 test('it fails password change if current password is wrong', function () {
-    app()->detectEnvironment(fn() => 'production');
+    config()->set('app.env', 'production');
     LaraiSetting::set('dashboard_password', Hash::make('old-password'));
+    config()->set('larai-tracker.session_lifetime', 120);
     Session::put('larai_authenticated', true);
     Session::put('larai_auth_time', time());
     
