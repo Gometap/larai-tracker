@@ -1,6 +1,21 @@
 # Changelog
 
 All notable changes to `larai-tracker` will be documented in this file.
+## [1.0.1] - 2026-02-27
+
+### Added
+
+- **Singleton Authentication**: A secure, password-based auth system to protect the dashboard.
+- **Premium Login Interface**: Modern glassmorphism login UI with support for initial setup (first-time use).
+- **Flexible Password Storage**: Hierarchical password resolution (Database > ENV > Config).
+- **Security Controls**: Dedicated section in Settings to change the dashboard password from the UI.
+- **Session Termination**: Integrated logout functionality across all dashboard views.
+- **Developer-Friendly Bypass**: Automatic bypass of auth in the `local` environment when no password is set.
+
+### Changed
+
+- Replaced Gate-based authorization with a more robust Middleware-based authentication system.
+- Standardized navigation bar across Dashboard, Logs, and Settings with integrated auth actions.
 
 ## [1.0.0] - 2026-02-18
 
