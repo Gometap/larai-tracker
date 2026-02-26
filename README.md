@@ -6,6 +6,7 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/gometap/larai-tracker.svg?style=flat-square)](https://packagist.org/packages/gometap/larai-tracker)
 [![Total Downloads](https://img.shields.io/packagist/dt/gometap/larai-tracker.svg?style=flat-square)](https://packagist.org/packages/gometap/larai-tracker)
+[![Tests](https://github.com/gometap/larai-tracker/workflows/Tests/badge.svg)](https://github.com/gometap/larai-tracker/actions)
 
 **Larai Tracker** is a powerful, standalone dashboard for tracking AI token usage and API costs in Laravel applications. It "invisibly" intercepts AI responses via Laravel's native HTTP Client events, meaning it works with **OpenAI, Gemini, Azure, and OpenRouter** out of the box with **zero code changes** to your application logic.
 
@@ -24,9 +25,10 @@
 
 - 🕵️ **Invisible Tracking**: Automatically logs AI responses via Laravel's `ResponseReceived` event.
 - 📊 **Premium Dashboard**: Access a high-end AI analytics center at `/larai-tracker`.
-- 💰 **Cost Calculation**: Real-time USD cost estimation for GPT-4o, Gemini Flash, and more.
+- � **Singleton Authentication**: Secure password-protected dashboard (Config > ENV > DB).
+- �💰 **Cost Calculation**: Real-time USD cost estimation for GPT-4o, Gemini Flash, and more.
 - 🌐 **Multi-Provider Support**: Seamlessly tracks OpenAI, Azure, Gemini, and OpenRouter.
-- 🔒 **Secure by Default**: Built-in authorization gates to protect your cost data.
+- ⚙️ **Dynamic Pricing**: Sync latest prices or manually override model costs from the UI.
 
 ## Installation
 
@@ -43,10 +45,10 @@ php artisan vendor:publish --tag="larai-tracker-migrations"
 php artisan migrate
 ```
 
-(Optional) Publish the views if you want to customize the dashboard:
+(Optional) Publish the configuration:
 
 ```bash
-php artisan vendor:publish --tag="larai-tracker-views"
+php artisan vendor:publish --tag="larai-tracker-config"
 ```
 
 ## Usage
@@ -69,16 +71,22 @@ The dashboard features a premium dark-mode interface with:
 
 ## Configuration
 
-### Authorization
+### Authentication (Singleton Auth)
 
-By default, the dashboard is only accessible in `local` environment. To customize this, define the `viewLaraiTracker` gate in your `AuthServiceProvider`:
+Larai Tracker uses a simple yet secure singleton authentication system. You can set the password in three ways (ordered by priority):
 
-```php
-use Illuminate\Support\Facades\Gate;
+1. **Database**: Change it directly from the **Security** section in the dashboard settings.
+2. **Environment**: Set `LARAI_TRACKER_PASSWORD` in your `.env` file.
+3. **Config**: Set it in `config/larai-tracker.php`.
 
-Gate::define('viewLaraiTracker', function ($user) {
-    return $user->is_admin; // Example: only admins can view
-});
+If no password is set and you are in a non-local environment, you will be prompted to set up a password upon your first visit.
+
+## 🧪 Testing
+
+The package includes a comprehensive test suite powered by [Pest](https://pestphp.com/).
+
+```bash
+composer test
 ```
 
 ## Contributing
