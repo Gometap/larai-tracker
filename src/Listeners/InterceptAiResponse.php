@@ -20,15 +20,21 @@ class InterceptAiResponse
             return;
         }
 
-        // OpenAI / Azure OpenAI / Groq / OpenRouter pattern
-        if (str_contains($url, 'openai.com') || str_contains($url, 'openai.azure.com') || isset($response['usage'])) {
-            $this->logOpenAiFormat($url, $response);
+        // Anthropic pattern — must be checked before the generic `usage` catch-all
+        if (str_contains($url, 'api.anthropic.com')) {
+            $this->logAnthropicFormat($response);
             return;
         }
 
         // Gemini pattern
         if (str_contains($url, 'generativelanguage.googleapis.com')) {
-            $this->logGeminiFormat($response);
+            $this->logGeminiFormat($url, $response);
+            return;
+        }
+
+        // OpenAI / Azure OpenAI / Groq / OpenRouter pattern
+        if (str_contains($url, 'openai.com') || str_contains($url, 'openai.azure.com') || isset($response['usage'])) {
+            $this->logOpenAiFormat($url, $response);
             return;
         }
     }
@@ -60,22 +66,51 @@ class InterceptAiResponse
 
     /**
      * Log usage in Gemini format.
+     * Gemini does not return the model name in the response body; extract it from the URL.
+     * URL pattern: /v1beta/models/gemini-1.5-pro:generateContent
      */
-    protected function logGeminiFormat(array $response): void
+    protected function logGeminiFormat(string $url, array $response): void
     {
         // Gemini returns usage in usageMetadata
         $usage = $response['usageMetadata'] ?? null;
-        
+
+        if (!$usage) {
+            return;
+        }
+
+        // Extract model from URL path, e.g. /models/gemini-1.5-pro:generateContent → gemini-1.5-pro
+        $model = 'gemini-1.5-pro';
+        if (preg_match('/\/models\/([^:\/]+)/i', $url, $matches)) {
+            $model = $matches[1];
+        }
+
+        AiCallRecorded::dispatch(
+            Auth::id(),
+            'google',
+            $model,
+            $usage['promptTokenCount'] ?? 0,
+            $usage['candidatesTokenCount'] ?? $usage['completionTokenCount'] ?? 0
+        );
+    }
+
+    /**
+     * Log usage in Anthropic format.
+     * Anthropic returns usage as { input_tokens, output_tokens } directly in response root.
+     */
+    protected function logAnthropicFormat(array $response): void
+    {
+        $usage = $response['usage'] ?? null;
+
         if (!$usage) {
             return;
         }
 
         AiCallRecorded::dispatch(
             Auth::id(),
-            'gemini',
-            $response['model'] ?? 'gemini-pro', // Gemini might not return model name in same place
-            $usage['promptTokenCount'] ?? 0,
-            $usage['candidatesTokenCount'] ?? $usage['completionTokenCount'] ?? 0
+            'anthropic',
+            $response['model'] ?? 'unknown',
+            $usage['input_tokens'] ?? 0,
+            $usage['output_tokens'] ?? 0
         );
     }
 }

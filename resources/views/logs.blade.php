@@ -38,8 +38,6 @@
         .dark .glass { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
         .reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
-        .pagination-link { @apply glass px-4 py-2 rounded-xl text-xs font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400; }
-        .pagination-link-active { @apply bg-brand-600 !text-white !opacity-100 shadow-lg shadow-brand-500/20 border-brand-500/50; }
     </style>
 </head>
 <body class="min-h-screen font-sans selection:bg-brand-500 selection:text-white">
@@ -57,7 +55,12 @@
                     </div>
                 </a>
             </div>
-            <div class="flex items-center gap-6 text-sm font-medium">
+            <!-- Mobile hamburger -->
+            <button id="mobileMenuBtn" class="md:hidden w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-500 dark:text-slate-400" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium">
                 <a href="{{ route('larai.settings') }}" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-500 dark:text-slate-400 group" title="Settings">
                     <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </a>
@@ -75,7 +78,20 @@
                 </a>
             </div>
         </div>
+        <!-- Mobile dropdown -->
+        <div id="mobileMenu" class="hidden md:hidden border-t border-black/5 dark:border-white/5 px-6 py-4 flex flex-col gap-4">
+            <a href="{{ route('larai.dashboard') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Overview</a>
+            <a href="{{ route('larai.settings') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Settings</a>
+            <a href="{{ route('larai.auth.logout') }}" class="text-red-500 font-semibold text-sm">Sign Out</a>
+        </div>
     </nav>
+
+    @if(session('success'))
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] glass px-6 py-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-sm shadow-xl flex items-center gap-3" role="alert">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('success') }}</span>
+    </div>
+    @endif
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
         <!-- Header -->
@@ -101,6 +117,16 @@
                         <option value="{{ $p }}" {{ request('provider') == $p ? 'selected' : '' }}>{{ strtoupper($p) }}</option>
                     @endforeach
                 </select>
+
+                <!-- Date Range -->
+                <input type="date" name="start_date" value="{{ request('start_date') }}" class="glass dark:bg-white/5 px-3 py-2.5 rounded-xl border-black/10 dark:border-white/10 outline-none text-sm" title="From date">
+                <span class="text-slate-400 text-xs font-bold">—</span>
+                <input type="date" name="end_date" value="{{ request('end_date') }}" class="glass dark:bg-white/5 px-3 py-2.5 rounded-xl border-black/10 dark:border-white/10 outline-none text-sm" title="To date">
+
+                <button type="submit" class="glass px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400">Filter</button>
+                @if(request()->hasAny(['q', 'provider', 'start_date', 'end_date']))
+                <a href="{{ route('larai.logs') }}" class="glass px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-red-500/10 hover:text-red-500 transition-all text-slate-500">Clear</a>
+                @endif
 
                 <!-- Export -->
                 <div class="relative group z-[100]">
@@ -200,16 +226,16 @@
                         Showing {{ $logs->firstItem() }} to {{ $logs->lastItem() }} of {{ $logs->total() }} executions
                     </p>
                     <div class="flex gap-2">
-                        @if ($logs->onFirstPage())
-                            <span class="pagination-link opacity-50 cursor-not-allowed">Previous</span>
+                                        @if ($logs->onFirstPage())
+                            <span class="glass px-4 py-2 rounded-xl text-xs font-bold opacity-50 cursor-not-allowed text-slate-600 dark:text-slate-400">Previous</span>
                         @else
-                            <a href="{{ $logs->previousPageUrl() }}" class="pagination-link">Previous</a>
+                            <a href="{{ $logs->previousPageUrl() }}" class="glass px-4 py-2 rounded-xl text-xs font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400">Previous</a>
                         @endif
 
                         @if ($logs->hasMorePages())
-                            <a href="{{ $logs->nextPageUrl() }}" class="pagination-link">Next</a>
+                            <a href="{{ $logs->nextPageUrl() }}" class="glass px-4 py-2 rounded-xl text-xs font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400">Next</a>
                         @else
-                            <span class="pagination-link opacity-50 cursor-not-allowed">Next</span>
+                            <span class="glass px-4 py-2 rounded-xl text-xs font-bold opacity-50 cursor-not-allowed text-slate-600 dark:text-slate-400">Next</span>
                         @endif
                     </div>
                 </div>
@@ -235,6 +261,15 @@
             reveals.forEach((el, i) => {
                 setTimeout(() => el.classList.add('active'), 100 * i);
             });
+
+            const toast = document.getElementById('toast');
+            if (toast) {
+                setTimeout(() => {
+                    toast.style.transition = 'opacity 0.5s ease';
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 500);
+                }, 4000);
+            }
         });
     </script>
 </body>

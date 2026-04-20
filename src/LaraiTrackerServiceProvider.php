@@ -35,6 +35,11 @@ class LaraiTrackerServiceProvider extends ServiceProvider
         $router = $this->app['router'];
         $router->aliasMiddleware('larai.auth', Http\Middleware\LaraiAuthMiddleware::class);
 
+        // Run log cleanup at most once per day
+        $this->app->booted(function () {
+            $this->runLogCleanup();
+        });
+
         if ($this->app->runningInConsole()) {
             $this->publishMigrations();
 
@@ -45,6 +50,29 @@ class LaraiTrackerServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../resources/views' => resource_path('views/vendor/larai'),
             ], 'larai-tracker-views');
+        }
+    }
+
+    /**
+     * Delete logs older than the configured retention period (runs at most once per day).
+     */
+    protected function runLogCleanup(): void
+    {
+        try {
+            $days = (int) Models\LaraiSetting::get('log_retention_days', 0);
+            if ($days <= 0) {
+                return;
+            }
+
+            $lastCleanup = Models\LaraiSetting::get('last_cleanup_at');
+            if ($lastCleanup && \Carbon\Carbon::parse($lastCleanup)->isToday()) {
+                return;
+            }
+
+            Models\LaraiLog::where('created_at', '<', now()->subDays($days))->delete();
+            Models\LaraiSetting::set('last_cleanup_at', now()->toDateTimeString());
+        } catch (\Exception $e) {
+            // Table may not exist yet — silently skip
         }
     }
 
