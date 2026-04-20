@@ -28,4 +28,18 @@ return [
     */
 
     'session_lifetime' => 120,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Login Rate Limiting
+    |--------------------------------------------------------------------------
+    |
+    | Maximum failed login attempts before lockout. The lockout will last for
+    | the number of minutes specified in 'lockout_minutes'.
+    |
+    */
+
+    'max_attempts' => 5,
+
+    'lockout_minutes' => 15,
 ];

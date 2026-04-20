@@ -120,7 +120,15 @@
                 </div>
             @endif
 
-            @if($errors->any())
+            @if($isLocked ?? false)
+                <div class="mb-6 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-700 dark:text-orange-400 text-sm font-medium">
+                    <div class="flex items-center gap-2 mb-1">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="font-bold">Account Temporarily Locked</span>
+                    </div>
+                    <p class="ml-7 text-xs opacity-80">Too many failed attempts. Try again in <span id="lockout-countdown" class="font-bold">{{ $secondsLeft ?? 0 }}</span>s.</p>
+                </div>
+            @elseif($errors->any())
                 <div class="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-400 text-sm font-medium flex items-center gap-2">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     {{ $errors->first() }}
@@ -177,9 +185,12 @@
 
                 <button
                     type="submit"
-                    class="w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-sm uppercase tracking-widest shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 transition-all duration-300 active:scale-[0.98]"
+                    @if($isLocked ?? false) disabled @endif
+                    class="w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-sm uppercase tracking-widest shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 transition-all duration-300 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
-                    @if($setupRequired ?? false)
+                    @if($isLocked ?? false)
+                        🔒 Account Locked
+                    @elseif($setupRequired ?? false)
                         Set Password & Continue
                     @else
                         Access Dashboard
@@ -213,6 +224,21 @@
                 document.documentElement.classList.add('dark');
                 localStorage.theme = 'dark';
             }
+        }
+
+        // Countdown timer for lockout
+        const countdownEl = document.getElementById('lockout-countdown');
+        if (countdownEl) {
+            let seconds = parseInt(countdownEl.textContent, 10);
+            const interval = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.reload();
+                } else {
+                    countdownEl.textContent = seconds;
+                }
+            }, 1000);
         }
     </script>
 </body>

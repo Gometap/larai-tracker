@@ -2,6 +2,7 @@
 
 use Gometap\LaraiTracker\Models\LaraiSetting;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 
 uses(\Gometap\LaraiTracker\Tests\TestCase::class);
@@ -130,4 +131,87 @@ test('it fails password change if current password is wrong', function () {
         ->assertSessionHas('password_error');
 
     expect(Hash::check('old-password', LaraiSetting::get('dashboard_password')))->toBeTrue();
+});
+
+test('it locks out after too many failed attempts', function () {
+    config()->set('app.env', 'production');
+    config()->set('larai-tracker.password', 'correct-password');
+    config()->set('larai-tracker.max_attempts', 3);
+    config()->set('larai-tracker.lockout_minutes', 15);
+
+    // Clear any previous rate limiter state
+    RateLimiter::clear('larai_login|127.0.0.1');
+
+    // Fail 3 times (max_attempts)
+    for ($i = 0; $i < 3; $i++) {
+        $this->post(route('larai.auth.login.submit'), [
+            'password' => 'wrong-password',
+        ]);
+    }
+
+    // 4th attempt should be locked out
+    $this->post(route('larai.auth.login.submit'), [
+        'password' => 'correct-password',
+    ])->assertSessionHasErrors(['password']);
+
+    // Ensure still not authenticated
+    expect(Session::get('larai_authenticated'))->toBeNull();
+});
+
+test('it clears rate limiter on successful login', function () {
+    config()->set('app.env', 'production');
+    config()->set('larai-tracker.password', 'correct-password');
+    config()->set('larai-tracker.max_attempts', 5);
+    config()->set('larai-tracker.session_lifetime', 120);
+
+    RateLimiter::clear('larai_login|127.0.0.1');
+
+    // Fail twice
+    $this->post(route('larai.auth.login.submit'), ['password' => 'wrong']);
+    $this->post(route('larai.auth.login.submit'), ['password' => 'wrong']);
+
+    expect(RateLimiter::attempts('larai_login|127.0.0.1'))->toBe(2);
+
+    // Successful login should clear the counter
+    $this->post(route('larai.auth.login.submit'), [
+        'password' => 'correct-password',
+    ])->assertRedirect(route('larai.dashboard'));
+
+    expect(RateLimiter::attempts('larai_login|127.0.0.1'))->toBe(0);
+});
+
+test('it isolates rate limiting by IP', function () {
+    config()->set('app.env', 'production');
+    config()->set('larai-tracker.password', 'secret');
+    config()->set('larai-tracker.max_attempts', 1);
+
+    RateLimiter::clear('larai_login|1.1.1.1');
+    RateLimiter::clear('larai_login|2.2.2.2');
+
+    // IP 1.1.1.1 fails and gets locked
+    $this->withServerVariables(['REMOTE_ADDR' => '1.1.1.1'])
+        ->post(route('larai.auth.login.submit'), ['password' => 'wrong']);
+    
+    $this->withServerVariables(['REMOTE_ADDR' => '1.1.1.1'])
+        ->post(route('larai.auth.login.submit'), ['password' => 'secret'])
+        ->assertSessionHasErrors(['password']);
+
+    // IP 2.2.2.2 should still be able to login
+    $this->withServerVariables(['REMOTE_ADDR' => '2.2.2.2'])
+        ->post(route('larai.auth.login.submit'), ['password' => 'secret'])
+        ->assertRedirect(route('larai.dashboard'));
+});
+
+test('it shows remaining attempts in error message', function () {
+    config()->set('app.env', 'production');
+    config()->set('larai-tracker.password', 'secret');
+    config()->set('larai-tracker.max_attempts', 5);
+
+    RateLimiter::clear('larai_login|127.0.0.1');
+
+    $this->post(route('larai.auth.login.submit'), ['password' => 'wrong'])
+        ->assertSessionHasErrors(['password' => 'The password is incorrect. 4 attempt(s) remaining.']);
+
+    $this->post(route('larai.auth.login.submit'), ['password' => 'wrong'])
+        ->assertSessionHasErrors(['password' => 'The password is incorrect. 3 attempt(s) remaining.']);
 });
