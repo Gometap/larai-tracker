@@ -178,7 +178,12 @@
                     <span class="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">Analytics Tool</span>
                 </div>
             </div>
-            <div class="flex items-center gap-6 text-sm font-medium">
+            <!-- Mobile hamburger -->
+            <button id="mobileMenuBtn" class="md:hidden w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-500 dark:text-slate-400" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium">
                  <a href="https://github.com/gometap/larai-tracker" class="text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-white transition-colors cursor-pointer">Github</a>
                  <a href="https://github.com/gometap/larai-tracker/blob/main/CHANGELOG.md" class="text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-white transition-colors cursor-pointer">Changelog</a>
                 
@@ -203,7 +208,29 @@
                 </a>
             </div>
         </div>
+        <!-- Mobile dropdown menu -->
+        <div id="mobileMenu" class="hidden md:hidden border-t border-black/5 dark:border-white/5 px-6 py-4 flex flex-col gap-4">
+            <a href="https://github.com/gometap/larai-tracker" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Github</a>
+            <a href="https://github.com/gometap/larai-tracker/blob/main/CHANGELOG.md" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Changelog</a>
+            <a href="{{ route('larai.settings') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Settings</a>
+            <a href="{{ route('larai.logs') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Logs</a>
+            <a href="{{ route('larai.auth.logout') }}" class="text-red-500 font-semibold text-sm">Sign Out</a>
+        </div>
     </nav>
+
+    <!-- Toast Notifications -->
+    @if(session('success'))
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] glass px-6 py-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-sm shadow-xl flex items-center gap-3" role="alert">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('success') }}</span>
+    </div>
+    @endif
+    @if(session('error'))
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] glass px-6 py-4 rounded-2xl border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-sm shadow-xl flex items-center gap-3" role="alert">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('error') }}</span>
+    </div>
+    @endif
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
         <!-- Dashboard Header -->
@@ -228,7 +255,7 @@
         </header>
 
         <!-- Dynamic Stats Grid -->
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
             <!-- Total Cost Card -->
             <div class="glass p-6 rounded-[2rem] relative overflow-hidden group hover:border-brand-500/30 transition-all duration-500 reveal" style="transition-delay: 100ms">
                 <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-500/10 rounded-full blur-2xl group-hover:bg-brand-500/20 transition-all"></div>
@@ -241,7 +268,11 @@
                 <h3 class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Total Investment</h3>
                 <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{{ $stats['currency_symbol'] }}{{ number_format($stats['total_cost'], 4) }}</p>
                 <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                    <span class="text-emerald-500 font-bold">↑ 12%</span>
+                    @if($stats['mom_change_pct'] >= 0)
+                        <span class="text-red-500 font-bold">↑ {{ number_format(abs($stats['mom_change_pct']), 1) }}%</span>
+                    @else
+                        <span class="text-emerald-500 font-bold">↓ {{ number_format(abs($stats['mom_change_pct']), 1) }}%</span>
+                    @endif
                     <span>vs last month</span>
                 </div>
             </div>
@@ -257,9 +288,13 @@
                 </div>
                 <h3 class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Daily Burn Rate</h3>
                 <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{{ $stats['currency_symbol'] }}{{ number_format($stats['today_cost'], 4) }}</p>
-                <div class="mt-4 flex items-center gap-2 text-xs text-brand-600 dark:text-brand-400">
-                    <span class="font-bold">Real-time</span>
-                    <span class="text-slate-500">updating automatically</span>
+                <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
+                    @if($stats['recent_logs']->isNotEmpty())
+                        <span class="text-brand-600 dark:text-brand-400 font-bold">Last:</span>
+                        <span>{{ $stats['recent_logs']->first()->created_at->diffForHumans() }}</span>
+                    @else
+                        <span>No calls today</span>
+                    @endif
                 </div>
             </div>
 
@@ -278,6 +313,36 @@
                     <span class="text-blue-600 dark:text-blue-400 font-bold">~{{ number_format($stats['total_tokens'] / 0.75, 0) }}</span>
                     <span>estimated words</span>
                 </div>
+            </div>
+
+            <!-- This Month Budget -->
+            <div class="glass p-6 rounded-[2rem] relative overflow-hidden group hover:border-amber-500/30 transition-all duration-500 reveal" style="transition-delay: 350ms">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
+                    <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Month</span>
+                </div>
+                <h3 class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">This Month</h3>
+                <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{{ $stats['currency_symbol'] }}{{ number_format($stats['this_month_cost'], 4) }}</p>
+                @if($stats['budget'] && $stats['budget_pct'] !== null)
+                <div class="mt-4">
+                    @php
+                        $pct = $stats['budget_pct'];
+                        $barColor = $pct >= 80 ? 'bg-red-500' : ($pct >= 60 ? 'bg-amber-500' : 'bg-emerald-500');
+                    @endphp
+                    <div class="w-full bg-black/5 dark:bg-white/5 rounded-full h-1.5 mb-1">
+                        <div class="{{ $barColor }} h-1.5 rounded-full transition-all" style="width: {{ $pct }}%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-slate-500">
+                        <span>{{ number_format($pct, 0) }}% of budget</span>
+                        <span>{{ $stats['currency_symbol'] }}{{ number_format($stats['budget']->amount, 2) }}</span>
+                    </div>
+                </div>
+                @else
+                <div class="mt-4 text-xs text-slate-500"><a href="{{ route('larai.settings') }}" class="text-brand-500 font-bold hover:underline">Set budget →</a></div>
+                @endif
             </div>
 
             <!-- Active Models -->
@@ -466,6 +531,16 @@
             reveals.forEach((el, i) => {
                 setTimeout(() => el.classList.add('active'), 100 * i);
             });
+
+            // Auto-dismiss toast after 4 seconds
+            const toast = document.getElementById('toast');
+            if (toast) {
+                setTimeout(() => {
+                    toast.style.transition = 'opacity 0.5s ease';
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 500);
+                }, 4000);
+            }
         });
 
         let isDark = document.documentElement.classList.contains('dark');

@@ -53,7 +53,12 @@
                     </div>
                 </a>
             </div>
-            <div class="flex items-center gap-3 text-sm font-medium">
+            <!-- Mobile hamburger -->
+            <button id="mobileMenuBtn" class="md:hidden w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-500 dark:text-slate-400" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+
+            <div class="hidden md:flex items-center gap-3 text-sm font-medium">
                 <button onclick="toggleTheme()" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition-all text-slate-500 dark:text-slate-400">
                     <svg id="theme-icon-dark" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1m-16 0h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.929 7.929l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
                     <svg id="theme-icon-light" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
@@ -64,15 +69,40 @@
                 </a>
             </div>
         </div>
+        <!-- Mobile dropdown -->
+        <div id="mobileMenu" class="hidden md:hidden border-t border-black/5 dark:border-white/5 px-6 py-4 flex flex-col gap-4">
+            <a href="{{ route('larai.dashboard') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Overview</a>
+            <a href="{{ route('larai.logs') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Logs</a>
+            <a href="{{ route('larai.auth.logout') }}" class="text-red-500 font-semibold text-sm">Sign Out</a>
+        </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-6 pb-20">
-        @if(session('success'))
-            <div class="mb-8 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-600 dark:text-emerald-400 font-bold text-sm reveal active">
-                {{ session('success') }}
-            </div>
-        @endif
+    @if(session('success'))
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] glass px-6 py-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-sm shadow-xl flex items-center gap-3" role="alert">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('success') }}</span>
+    </div>
+    @endif
+    @if(session('error'))
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] glass px-6 py-4 rounded-2xl border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-sm shadow-xl flex items-center gap-3" role="alert">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('error') }}</span>
+    </div>
+    @endif
+    @if(session('password_success'))
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] glass px-6 py-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-sm shadow-xl flex items-center gap-3" role="alert">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('password_success') }}</span>
+    </div>
+    @endif
+    @if(session('password_error'))
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] glass px-6 py-4 rounded-2xl border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-sm shadow-xl flex items-center gap-3" role="alert">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('password_error') }}</span>
+    </div>
+    @endif
 
+    <main class="max-w-7xl mx-auto px-6 pb-20">
         <form action="{{ route('larai.settings.update') }}" method="POST">
             @csrf
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -123,6 +153,26 @@
                         </div>
                     </section>
 
+                    <!-- Log Retention Section -->
+                    <section class="glass p-8 rounded-[2.5rem] reveal active">
+                        <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Log Retention
+                        </h3>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Auto-delete logs older than</label>
+                            <select name="log_retention_days" class="w-full glass bg-transparent px-4 py-3 rounded-xl border-black/10 dark:border-white/10 outline-none focus:ring-2 focus:ring-brand-500/50 text-sm font-semibold">
+                                <option value="0" {{ $logRetentionDays == 0 ? 'selected' : '' }}>Never (keep all)</option>
+                                <option value="30" {{ $logRetentionDays == 30 ? 'selected' : '' }}>30 days</option>
+                                <option value="60" {{ $logRetentionDays == 60 ? 'selected' : '' }}>60 days</option>
+                                <option value="90" {{ $logRetentionDays == 90 ? 'selected' : '' }}>90 days</option>
+                                <option value="180" {{ $logRetentionDays == 180 ? 'selected' : '' }}>180 days</option>
+                                <option value="365" {{ $logRetentionDays == 365 ? 'selected' : '' }}>1 year</option>
+                            </select>
+                            <p class="text-[10px] text-slate-400 dark:text-slate-600 mt-2">Cleanup runs automatically once per day.</p>
+                        </div>
+                    </section>
+
                     <!-- Sync Tool -->
                     <section class="glass p-8 rounded-[2.5rem] bg-gradient-to-br from-brand-500/10 to-transparent border-brand-500/20 reveal active">
                         <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
@@ -141,14 +191,10 @@
                         </h3>
 
                         @if(session('password_success'))
-                            <div class="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 font-bold text-xs">
-                                {{ session('password_success') }}
-                            </div>
+                            {{-- shown as toast --}}
                         @endif
                         @if(session('password_error'))
-                            <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 dark:text-red-400 font-bold text-xs">
-                                {{ session('password_error') }}
-                            </div>
+                            {{-- shown as toast --}}
                         @endif
 
                         <div class="space-y-4">
@@ -176,7 +222,13 @@
                     <section class="glass rounded-[2.5rem] overflow-hidden reveal active">
                         <div class="px-8 py-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between bg-black/[0.01] dark:bg-white/[0.01]">
                             <h3 class="text-xl font-bold">Model Price Configuration</h3>
-                            <button type="submit" class="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl text-sm hover:scale-105 transition-all">Save Overrides</button>
+                            <div class="flex items-center gap-3">
+                                <button type="button" onclick="addPriceRow()" class="px-4 py-2 bg-brand-600/10 text-brand-600 dark:text-brand-400 font-bold rounded-xl text-sm hover:bg-brand-600/20 transition-all flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    Add
+                                </button>
+                                <button type="submit" class="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl text-sm hover:scale-105 transition-all">Save Overrides</button>
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm text-left">
@@ -185,7 +237,8 @@
                                         <th class="px-8 py-4 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-tighter text-[10px]">Model & Provider</th>
                                         <th class="px-8 py-4 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-tighter text-[10px]">Input ($/1M)</th>
                                         <th class="px-8 py-4 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-tighter text-[10px]">Output ($/1M)</th>
-                                        <th class="px-8 py-4 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-tighter text-[10px] text-right">Status</th>
+                                        <th class="px-8 py-4 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-tighter text-[10px]">Status</th>
+                                        <th class="px-8 py-4 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-tighter text-[10px] text-right">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-black/[0.03] dark:divide-white/[0.03]">
@@ -203,19 +256,30 @@
                                         <td class="px-8 py-5">
                                             <input type="number" step="0.0001" name="prices[{{ $price->id }}][output]" value="{{ (float)$price->output_price_per_1m }}" class="w-32 glass bg-transparent px-3 py-1.5 rounded-lg border-black/10 dark:border-white/10 outline-none text-xs font-mono">
                                         </td>
-                                        <td class="px-8 py-5 text-right">
+                                        <td class="px-8 py-5">
                                             @if($price->is_custom)
                                                 <span class="text-[10px] bg-purple-500/10 text-purple-500 px-2 py-1 rounded font-bold uppercase tracking-widest">Manual</span>
                                             @else
                                                 <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded font-bold uppercase tracking-widest">Synced</span>
                                             @endif
                                         </td>
+                                        <td class="px-8 py-5 text-right">
+                                            <form method="POST" action="{{ route('larai.prices.delete', $price->id) }}" onsubmit="return confirm('Delete this price entry?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-500 hover:text-red-600 transition-colors" title="Delete">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        </td>
                                     </tr>
                                     @empty
-                                    <tr>
-                                        <td colspan="4" class="py-20 text-center text-slate-500 font-bold tracking-widest uppercase text-xs">No models found. Click sync to fetch defaults.</td>
+                                    <tr id="empty-row">
+                                        <td colspan="5" class="py-20 text-center text-slate-500 font-bold tracking-widest uppercase text-xs">No models found. Click sync to fetch defaults.</td>
                                     </tr>
                                     @endforelse
+                                    <!-- New price rows inserted here by JS -->
+                                    <tbody id="new-price-rows"></tbody>
                                 </tbody>
                             </table>
                         </div>
@@ -226,6 +290,41 @@
     </main>
 
     <script>
+        let newRowIndex = 0;
+
+        function addPriceRow() {
+            const emptyRow = document.getElementById('empty-row');
+            if (emptyRow) emptyRow.style.display = 'none';
+
+            const tbody = document.getElementById('new-price-rows');
+            const i = newRowIndex++;
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors bg-brand-500/5';
+            row.innerHTML = `
+                <td class="px-8 py-4">
+                    <div class="flex flex-col gap-1">
+                        <input type="text" name="new_prices[${i}][provider]" placeholder="openai" required class="w-full glass bg-transparent px-3 py-1.5 rounded-lg border-black/10 dark:border-white/10 outline-none text-xs font-mono focus:ring-1 focus:ring-brand-500/50">
+                        <input type="text" name="new_prices[${i}][model]" placeholder="model-name" required class="w-full glass bg-transparent px-3 py-1.5 rounded-lg border-black/10 dark:border-white/10 outline-none text-xs font-mono focus:ring-1 focus:ring-brand-500/50">
+                    </div>
+                </td>
+                <td class="px-8 py-4">
+                    <input type="number" step="0.0001" name="new_prices[${i}][input]" value="0" class="w-32 glass bg-transparent px-3 py-1.5 rounded-lg border-black/10 dark:border-white/10 outline-none text-xs font-mono">
+                </td>
+                <td class="px-8 py-4">
+                    <input type="number" step="0.0001" name="new_prices[${i}][output]" value="0" class="w-32 glass bg-transparent px-3 py-1.5 rounded-lg border-black/10 dark:border-white/10 outline-none text-xs font-mono">
+                </td>
+                <td class="px-8 py-4">
+                    <span class="text-[10px] bg-brand-500/10 text-brand-500 px-2 py-1 rounded font-bold uppercase tracking-widest">New</span>
+                </td>
+                <td class="px-8 py-4 text-right">
+                    <button type="button" onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-600 transition-colors" title="Remove">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        }
+
         function toggleTheme() {
             if (document.documentElement.classList.contains('dark')) {
                 document.documentElement.classList.remove('dark');
@@ -241,6 +340,15 @@
             reveals.forEach((el, i) => {
                 setTimeout(() => el.classList.add('active'), 100 * i);
             });
+
+            const toast = document.getElementById('toast');
+            if (toast) {
+                setTimeout(() => {
+                    toast.style.transition = 'opacity 0.5s ease';
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 500);
+                }, 4000);
+            }
         });
     </script>
 </body>

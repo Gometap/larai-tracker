@@ -14,10 +14,31 @@ class LaraiDashboardController extends Controller
         $endDate = $request->get('end_date', now()->toDateString());
         $startDate = $request->get('start_date', now()->subDays(6)->toDateString());
 
+        $thisMonthCost = LaraiLog::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('cost_usd');
+
+        $lastMonthCost = LaraiLog::whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->sum('cost_usd');
+
+        $momChangePct = $lastMonthCost > 0
+            ? (($thisMonthCost - $lastMonthCost) / $lastMonthCost) * 100
+            : ($thisMonthCost > 0 ? 100 : 0);
+
+        $budget = \Gometap\LaraiTracker\Models\LaraiBudget::where('is_active', true)->first();
+        $budgetPct = ($budget && $budget->amount > 0)
+            ? min(($thisMonthCost / $budget->amount) * 100, 100)
+            : null;
+
         $stats = [
             'total_cost' => LaraiLog::sum('cost_usd'),
             'total_tokens' => LaraiLog::sum('total_tokens'),
             'today_cost' => LaraiLog::whereDate('created_at', today())->sum('cost_usd'),
+            'this_month_cost' => $thisMonthCost,
+            'mom_change_pct' => $momChangePct,
+            'budget' => $budget,
+            'budget_pct' => $budgetPct,
             'recent_logs' => LaraiLog::latest()->limit(10)->get(),
             'costs_by_model' => LaraiLog::select('model', DB::raw('SUM(cost_usd) as cost'))
                 ->whereBetween(DB::raw('DATE(created_at)'), [$startDate, $endDate])
@@ -66,11 +87,10 @@ class LaraiDashboardController extends Controller
 
     public function logs(Request $request)
     {
-
         $query = LaraiLog::query();
 
         // Search
-        if ($request->has('q')) {
+        if ($request->filled('q')) {
             $search = $request->get('q');
             $query->where(function ($q) use ($search) {
                 $q->where('model', 'like', "%{$search}%")
@@ -79,9 +99,17 @@ class LaraiDashboardController extends Controller
             });
         }
 
-        // Filter
-        if ($request->has('provider') && $request->get('provider') !== 'all') {
+        // Provider filter
+        if ($request->filled('provider') && $request->get('provider') !== 'all') {
             $query->where('provider', $request->get('provider'));
+        }
+
+        // Date range filter
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->get('start_date'));
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->get('end_date'));
         }
 
         // Sort
@@ -154,7 +182,6 @@ class LaraiDashboardController extends Controller
      */
     public function settings()
     {
-
         $budget = \Gometap\LaraiTracker\Models\LaraiBudget::first() ?? new \Gometap\LaraiTracker\Models\LaraiBudget([
             'amount' => 100,
             'alert_threshold' => 80,
@@ -166,8 +193,9 @@ class LaraiDashboardController extends Controller
             'code' => \Gometap\LaraiTracker\Models\LaraiSetting::get('currency_code', 'USD'),
             'symbol' => \Gometap\LaraiTracker\Models\LaraiSetting::get('currency_symbol', '$'),
         ];
+        $logRetentionDays = (int) \Gometap\LaraiTracker\Models\LaraiSetting::get('log_retention_days', 0);
 
-        return view('larai::settings', compact('budget', 'customPrices', 'currency'));
+        return view('larai::settings', compact('budget', 'customPrices', 'currency', 'logRetentionDays'));
     }
 
     /**
@@ -192,7 +220,7 @@ class LaraiDashboardController extends Controller
             \Gometap\LaraiTracker\Models\LaraiSetting::set('currency_symbol', $request->input('currency.symbol', '$'));
         }
 
-        // Custom Prices
+        // Custom Prices — update existing
         $pricesData = $request->input('prices', []);
         foreach ($pricesData as $id => $data) {
             $price = \Gometap\LaraiTracker\Models\LaraiModelPrice::find($id);
@@ -203,6 +231,27 @@ class LaraiDashboardController extends Controller
                     'is_custom' => true,
                 ]);
             }
+        }
+
+        // Custom Prices — add new rows
+        $newPrices = $request->input('new_prices', []);
+        foreach ($newPrices as $data) {
+            if (empty($data['provider']) || empty($data['model'])) {
+                continue;
+            }
+            \Gometap\LaraiTracker\Models\LaraiModelPrice::updateOrCreate(
+                ['provider' => strtolower(trim($data['provider'])), 'model' => strtolower(trim($data['model']))],
+                [
+                    'input_price_per_1m' => (float) ($data['input'] ?? 0),
+                    'output_price_per_1m' => (float) ($data['output'] ?? 0),
+                    'is_custom' => true,
+                ]
+            );
+        }
+
+        // Log Retention
+        if ($request->has('log_retention_days')) {
+            \Gometap\LaraiTracker\Models\LaraiSetting::set('log_retention_days', (int) $request->input('log_retention_days'));
         }
 
         // Security: Password Change
@@ -237,6 +286,16 @@ class LaraiDashboardController extends Controller
         }
 
         return redirect()->back()->with('success', 'Settings updated successfully.');
+    }
+
+    /**
+     * Delete a custom model price entry.
+     */
+    public function deletePrice($id)
+    {
+        \Gometap\LaraiTracker\Models\LaraiModelPrice::findOrFail($id)->delete();
+
+        return redirect()->route('larai.settings')->with('success', 'Price entry deleted.');
     }
 
     /**

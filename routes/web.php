@@ -19,6 +19,7 @@ Route::prefix('larai-tracker')->middleware(['web'])->group(function () {
         Route::get('/export/{format}', [LaraiDashboardController::class, 'export'])->name('larai.export');
         Route::get('/settings', [LaraiDashboardController::class, 'settings'])->name('larai.settings');
         Route::post('/settings', [LaraiDashboardController::class, 'updateSettings'])->name('larai.settings.update');
+        Route::delete('/settings/prices/{id}', [LaraiDashboardController::class, 'deletePrice'])->name('larai.prices.delete');
         Route::post('/sync-prices', [LaraiDashboardController::class, 'syncPrices'])->name('larai.sync-prices');
     });
 });
