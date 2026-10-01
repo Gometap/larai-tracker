@@ -65,7 +65,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -75,7 +75,7 @@ jobs:
           coverage: none
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.composer/cache/files
           key: php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-composer-${{ hashFiles('**/composer.json') }}
@@ -110,5 +110,6 @@ jobs:
       # preventing the compatibility suite from running.
       - name: Report legacy framework advisories
         if: matrix.laravel != '12.*'
-        continue-on-error: true
-        run: composer audit --locked
+        run: |
+          composer audit --locked || \
+            echo "::warning title=Legacy framework advisories::Laravel ${{ matrix.laravel }} is retained for compatibility testing but is outside upstream security support."
