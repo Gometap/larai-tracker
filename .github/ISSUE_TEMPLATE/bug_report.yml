@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible Larai Tracker defect
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include API keys, prompts, completions, or private production data. Report vulnerabilities privately via SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Larai Tracker version
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: PHP, Laravel, database
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true

@@ -42,7 +42,7 @@ class LaraiAuthMiddleware
     {
         try {
             $dbPassword = LaraiSetting::get('dashboard_password');
-            if (!is_null($dbPassword) && $dbPassword !== '') {
+            if (! is_null($dbPassword) && $dbPassword !== '') {
                 return $dbPassword;
             }
         } catch (\Exception $e) {
@@ -57,7 +57,7 @@ class LaraiAuthMiddleware
      */
     protected function isAuthenticated(Request $request): bool
     {
-        if (!$request->session()->has('larai_authenticated')) {
+        if (! $request->session()->has('larai_authenticated')) {
             return false;
         }
 
@@ -66,6 +66,7 @@ class LaraiAuthMiddleware
 
         if (time() - $authTime > $lifetime) {
             $request->session()->forget(['larai_authenticated', 'larai_auth_time']);
+
             return false;
         }
 

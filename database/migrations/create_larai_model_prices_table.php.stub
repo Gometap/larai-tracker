@@ -14,6 +14,9 @@ return new class extends Migration {
             $table->decimal('input_price_per_1m', 15, 4);
             $table->decimal('output_price_per_1m', 15, 4);
             $table->boolean('is_custom')->default(false);
+            $table->string('source_url', 2048)->nullable();
+            $table->date('effective_date')->nullable();
+            $table->unsignedInteger('catalog_version')->nullable();
             $table->timestamps();
 
             $table->unique(['provider', 'model']);

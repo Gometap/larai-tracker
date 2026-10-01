@@ -7,15 +7,21 @@ First off, thank you for considering contributing to Larai Tracker! It's people 
 1. Clone the repository.
 2. Run `composer install`.
 3. Create a new branch for your feature or bugfix.
-4. If adding a feature, please include tests.
+4. Add regression tests before changing behavior where practical.
 
 ## Coding Standards
 
-We follow PSR-12 coding standards. You can run checks using your preferred tool.
+Run the release checks before opening a pull request:
+
+```bash
+composer check
+composer validate --strict --no-check-publish
+composer audit --locked
+```
 
 ## Pull Requests
 
-1. Ensure all tests pass.
+1. Ensure all tests, Pint, Larastan, Composer validation, and dependency audit pass.
 2. Update the README or documentation if necessary.
 3. Use the provided Pull Request Template.
 

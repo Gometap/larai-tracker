@@ -17,7 +17,9 @@
         "pestphp/pest": "^2.34|^3.0",
         "orchestra/testbench": "^8.0|^9.0|^10.0",
         "pestphp/pest-plugin-laravel": "^2.3|^3.0",
-        "guzzlehttp/guzzle": "^7.0"
+        "guzzlehttp/guzzle": "^7.0",
+        "laravel/pint": "^1.18",
+        "larastan/larastan": "^2.9|^3.0"
     },
     "autoload": {
         "psr-4": {
@@ -30,7 +32,14 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/pest"
+        "test": "vendor/bin/pest",
+        "format:check": "vendor/bin/pint --test",
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=1G",
+        "check": [
+            "@test",
+            "@format:check",
+            "@analyse"
+        ]
     },
     "extra": {
         "laravel": {

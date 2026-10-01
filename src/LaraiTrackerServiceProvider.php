@@ -2,6 +2,10 @@
 
 namespace Gometap\LaraiTracker;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Client\Events\ResponseReceived;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class LaraiTrackerServiceProvider extends ServiceProvider
@@ -11,15 +15,16 @@ class LaraiTrackerServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/larai-tracker.php', 'larai-tracker');
+        $this->mergeConfigFrom(__DIR__.'/../config/larai-tracker.php', 'larai-tracker');
         $this->app->singleton(Services\LaraiCostCalculator::class, function ($app) {
-            return new Services\LaraiCostCalculator();
+            return new Services\LaraiCostCalculator;
         });
+        $this->app->alias(Services\LaraiCostCalculator::class, 'larai-tracker');
 
         $this->app->booted(function () {
             $events = $this->app['events'];
             $events->listen(Events\AiCallRecorded::class, Listeners\LogAiCall::class);
-            $events->listen(\Illuminate\Http\Client\Events\ResponseReceived::class, Listeners\InterceptAiResponse::class);
+            $events->listen(ResponseReceived::class, Listeners\InterceptAiResponse::class);
         });
     }
 
@@ -28,51 +33,31 @@ class LaraiTrackerServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'larai');
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'larai');
 
         // Register middleware alias
         $router = $this->app['router'];
         $router->aliasMiddleware('larai.auth', Http\Middleware\LaraiAuthMiddleware::class);
 
-        // Run log cleanup at most once per day
-        $this->app->booted(function () {
-            $this->runLogCleanup();
+        RateLimiter::for('larai-login', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
         });
 
         if ($this->app->runningInConsole()) {
+            $this->commands([
+                Console\Commands\CleanupLogsCommand::class,
+            ]);
+
             $this->publishMigrations();
 
             $this->publishes([
-                __DIR__ . '/../config/larai-tracker.php' => config_path('larai-tracker.php'),
+                __DIR__.'/../config/larai-tracker.php' => config_path('larai-tracker.php'),
             ], 'larai-tracker-config');
 
             $this->publishes([
-                __DIR__ . '/../resources/views' => resource_path('views/vendor/larai'),
+                __DIR__.'/../resources/views' => resource_path('views/vendor/larai'),
             ], 'larai-tracker-views');
-        }
-    }
-
-    /**
-     * Delete logs older than the configured retention period (runs at most once per day).
-     */
-    protected function runLogCleanup(): void
-    {
-        try {
-            $days = (int) Models\LaraiSetting::get('log_retention_days', 0);
-            if ($days <= 0) {
-                return;
-            }
-
-            $lastCleanup = Models\LaraiSetting::get('last_cleanup_at');
-            if ($lastCleanup && \Carbon\Carbon::parse($lastCleanup)->isToday()) {
-                return;
-            }
-
-            Models\LaraiLog::where('created_at', '<', now()->subDays($days))->delete();
-            Models\LaraiSetting::set('last_cleanup_at', now()->toDateTimeString());
-        } catch (\Exception $e) {
-            // Table may not exist yet — silently skip
         }
     }
 
@@ -86,13 +71,18 @@ class LaraiTrackerServiceProvider extends ServiceProvider
             'create_larai_budgets_table.php' => 'create_larai_budgets_table.php',
             'create_larai_model_prices_table.php' => 'create_larai_model_prices_table.php',
             'create_larai_settings_table.php' => 'create_larai_settings_table.php',
+            'upgrade_larai_tracker_to_v1_2_0.php' => 'upgrade_larai_tracker_to_v1_2_0.php',
         ];
 
         $publishPath = [];
         $i = 0;
         foreach ($migrations as $stub => $file) {
+            if (glob(database_path("migrations/*_{$file}"))) {
+                continue;
+            }
+
             $timestamp = date('Y_m_d_His', time() + $i);
-            $publishPath[__DIR__ . "/../database/migrations/{$stub}.stub"] = database_path("migrations/{$timestamp}_{$file}");
+            $publishPath[__DIR__."/../database/migrations/{$stub}.stub"] = database_path("migrations/{$timestamp}_{$file}");
             $i++;
         }
 

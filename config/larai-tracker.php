@@ -20,6 +20,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Initial Setup Token
+    |--------------------------------------------------------------------------
+    |
+    | Required to create the first dashboard password outside local
+    | development. Generate a long random value and remove it after setup.
+    |
+    */
+
+    'setup_token' => env('LARAI_TRACKER_SETUP_TOKEN', null),
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Lifetime (minutes)
     |--------------------------------------------------------------------------
     |
@@ -28,4 +40,16 @@ return [
     */
 
     'session_lifetime' => 120,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Price Catalog
+    |--------------------------------------------------------------------------
+    */
+
+    'price_catalog_url' => env(
+        'LARAI_TRACKER_PRICE_CATALOG_URL',
+        'https://raw.githubusercontent.com/gometap/larai-tracker/main/resources/data/prices.json'
+    ),
+    'price_catalog_timeout' => 5,
 ];

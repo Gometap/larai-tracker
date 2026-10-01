@@ -19,8 +19,9 @@ return new class extends Migration
             $blueprint->integer('prompt_tokens')->default(0);
             $blueprint->integer('completion_tokens')->default(0);
             $blueprint->integer('total_tokens')->default(0);
-            $blueprint->decimal('cost_usd', 15, 8)->default(0);
+            $blueprint->decimal('cost_usd', 15, 8)->nullable();
             $blueprint->timestamps();
+
         });
     }
 

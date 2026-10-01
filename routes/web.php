@@ -8,15 +8,19 @@ Route::prefix('larai-tracker')->middleware(['web'])->group(function () {
 
     // Auth routes
     Route::get('/login', [LaraiAuthController::class, 'showLogin'])->name('larai.auth.login');
-    Route::post('/login', [LaraiAuthController::class, 'login'])->name('larai.auth.login.submit');
-    Route::get('/logout', [LaraiAuthController::class, 'logout'])->name('larai.auth.logout');
+    Route::post('/login', [LaraiAuthController::class, 'login'])
+        ->middleware('throttle:larai-login')
+        ->name('larai.auth.login.submit');
+    Route::post('/logout', [LaraiAuthController::class, 'logout'])->name('larai.auth.logout');
 
     // Protected routes
     Route::middleware('larai.auth')->group(function () {
         Route::get('/', [LaraiDashboardController::class, 'index'])->name('larai.dashboard');
         Route::get('/chart-data', [LaraiDashboardController::class, 'chartData'])->name('larai.chart-data');
         Route::get('/logs', [LaraiDashboardController::class, 'logs'])->name('larai.logs');
-        Route::get('/export/{format}', [LaraiDashboardController::class, 'export'])->name('larai.export');
+        Route::get('/export/{format}', [LaraiDashboardController::class, 'export'])
+            ->whereIn('format', ['json', 'csv', 'txt'])
+            ->name('larai.export');
         Route::get('/settings', [LaraiDashboardController::class, 'settings'])->name('larai.settings');
         Route::post('/settings', [LaraiDashboardController::class, 'updateSettings'])->name('larai.settings.update');
         Route::delete('/settings/prices/{id}', [LaraiDashboardController::class, 'deletePrice'])->name('larai.prices.delete');

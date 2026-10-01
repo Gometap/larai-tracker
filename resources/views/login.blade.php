@@ -130,6 +130,23 @@
             <form method="POST" action="{{ route('larai.auth.login.submit') }}" class="space-y-5">
                 @csrf
 
+                @if(($setupRequired ?? false) && !app()->environment('local'))
+                <div>
+                    <label for="setup_token" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+                        Owner Setup Token
+                    </label>
+                    <input
+                        type="password"
+                        name="setup_token"
+                        id="setup_token"
+                        required
+                        autocomplete="one-time-code"
+                        class="w-full px-4 py-3.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/5 dark:border-white/10 text-slate-900 dark:text-white font-medium"
+                    >
+                    <p class="mt-2 text-xs text-slate-500">Use the value from <code>LARAI_TRACKER_SETUP_TOKEN</code>.</p>
+                </div>
+                @endif
+
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                         @if($setupRequired ?? false)

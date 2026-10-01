@@ -8,7 +8,7 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/gometap/larai-tracker.svg?style=flat-square)](https://packagist.org/packages/gometap/larai-tracker)
 [![Tests](https://github.com/gometap/larai-tracker/workflows/Tests/badge.svg)](https://github.com/gometap/larai-tracker/actions)
 
-**Larai Tracker** is a powerful, standalone dashboard for tracking AI token usage and API costs in Laravel applications. It "invisibly" intercepts AI responses via Laravel's native HTTP Client events, meaning it works with **OpenAI, Gemini, Azure, and OpenRouter** out of the box with **zero code changes** to your application logic.
+**Larai Tracker** is a standalone dashboard for tracking AI token usage and estimated USD API costs in Laravel applications. It observes supported requests made through Laravel's `Http` client for **OpenAI, Anthropic, Gemini, Azure OpenAI, and OpenRouter** without changing the calling code.
 
 Supports Laravel **10, 11, and 12**.
 
@@ -25,12 +25,13 @@ Supports Laravel **10, 11, and 12**.
 
 ## Features
 
-- 🕵️ **Invisible Tracking**: Automatically logs AI responses via Laravel's `ResponseReceived` event.
+- 🕵️ **Automatic Tracking**: Logs documented token usage from supported Laravel HTTP client responses.
 - 📊 **Premium Dashboard**: Access a high-end AI analytics center at `/larai-tracker`.
-- � **Singleton Authentication**: Secure password-protected dashboard (Config > ENV > DB).
-- �💰 **Cost Calculation**: Real-time USD cost estimation for GPT-4o, Gemini Flash, and more.
-- 🌐 **Multi-Provider Support**: Seamlessly tracks OpenAI, Azure, Gemini, and OpenRouter.
+- 🔐 **Singleton Authentication**: Rate-limited, password-protected owner dashboard with secure first setup.
+- 💰 **Honest Cost Estimates**: Versioned USD catalog, manual overrides, and explicit unavailable-price states.
+- 🌐 **Multi-Provider Support**: OpenAI, Anthropic, Azure OpenAI, Gemini, and OpenRouter endpoint adapters.
 - ⚙️ **Dynamic Pricing**: Sync latest prices or manually override model costs from the UI.
+- 📦 **Large-data Safety**: Streamed exports, indexed date filters, and scheduled batched retention.
 
 ## Installation
 
@@ -47,6 +48,14 @@ php artisan vendor:publish --tag="larai-tracker-migrations"
 php artisan migrate
 ```
 
+In production, configure either a permanent dashboard password or a temporary first-setup token:
+
+```dotenv
+LARAI_TRACKER_PASSWORD=a-long-random-password
+# Or, only until the first password is saved:
+LARAI_TRACKER_SETUP_TOKEN=a-long-random-owner-controlled-token
+```
+
 (Optional) Publish the configuration:
 
 ```bash
@@ -57,7 +66,17 @@ php artisan vendor:publish --tag="larai-tracker-config"
 
 ### 🕵️ Automatic Tracking
 
-Once installed, the package starts working immediately. Every time your application uses the Laravel `Http` facade to call an AI provider (OpenAI, Gemini, etc.), Larai Tracker intercepts the response, parses the token usage, and logs it to the database.
+Once installed, the package observes successful calls made through Laravel's `Http` facade. It does not observe provider SDKs that bypass Laravel's HTTP client, streamed responses that do not emit a complete supported usage payload, or arbitrary OpenAI-compatible hosts.
+
+| Provider | Supported endpoint shape | Usage fields |
+| --- | --- | --- |
+| OpenAI | `/v1/chat/completions`, `/v1/responses` | prompt/completion or input/output tokens |
+| Anthropic | `/v1/messages` | input/output tokens |
+| Gemini | model `generateContent` URLs | `usageMetadata` |
+| Azure OpenAI | deployment chat/responses URLs | OpenAI-compatible usage |
+| OpenRouter | `/api/v1/chat/completions` | OpenAI-compatible usage |
+
+Larai Tracker stores usage metadata only. It does not persist prompts, completions, raw bodies, authorization headers, or API keys.
 
 ### 📊 Accessing the Dashboard
 
@@ -81,7 +100,33 @@ Larai Tracker uses a simple yet secure singleton authentication system. You can 
 2. **Environment**: Set `LARAI_TRACKER_PASSWORD` in your `.env` file.
 3. **Config**: Set it in `config/larai-tracker.php`.
 
-If no password is set and you are in a non-local environment, you will be prompted to set up a password upon your first visit.
+If no password is set outside `local`, first setup is disabled unless `LARAI_TRACKER_SETUP_TOKEN` contains at least 16 characters. Enter that token once on the setup screen, save the password, then remove the setup token from the environment. Login is limited to five attempts per minute per IP.
+
+### Pricing, currency, and budgets
+
+All estimated costs and budgets use USD. Unknown models are logged with a null cost, shown as **Price unavailable**, and excluded from totals and budget alerts. Prices are estimates and never replace provider invoices. Manual model prices take precedence and are not overwritten by catalog sync. See [catalog provenance](docs/PRICING_SOURCES.md).
+
+### Retention
+
+Web requests no longer run cleanup. Set the retention period in Settings and schedule the command in the host application:
+
+```php
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::command('larai:cleanup')->daily();
+```
+
+You can also run `php artisan larai:cleanup --days=90 --batch=1000` manually.
+
+## Upgrading from v1.1.x
+
+```bash
+composer require gometap/larai-tracker:^1.2
+php artisan vendor:publish --tag="larai-tracker-migrations"
+php artisan migrate
+```
+
+The upgrade makes `cost_usd` nullable, adds price provenance and budget-alert idempotency fields, and normalizes the old display-only currency setting to USD. Existing logs and manual prices remain unchanged. Replace any GET logout links with the package's POST form if you published custom views, and schedule `larai:cleanup` if retention is enabled.
 
 ## 🧪 Testing
 
@@ -89,6 +134,8 @@ The package includes a comprehensive test suite powered by [Pest](https://pestph
 
 ```bash
 composer test
+composer format:check
+composer analyse
 ```
 
 ## Contributing

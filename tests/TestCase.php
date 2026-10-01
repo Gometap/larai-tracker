@@ -29,8 +29,12 @@ class TestCase extends Orchestra
         foreach ($csrfClasses as $class) {
             if (class_exists($class)) {
                 $app->singleton($class, function () {
-                    return new class {
-                        public function handle($request, $next) { return $next($request); }
+                    return new class
+                    {
+                        public function handle($request, $next)
+                        {
+                            return $next($request);
+                        }
                     };
                 });
             }
@@ -38,7 +42,7 @@ class TestCase extends Orchestra
 
         // Necessary for testing session-based auth
         config()->set('session.driver', 'array');
-        
+
         // Define 'web' middleware group as it's used in package routes but might not exist in Testbench
         $app['router']->middlewareGroup('web', []);
 
@@ -48,10 +52,11 @@ class TestCase extends Orchestra
             'create_larai_budgets_table.php.stub',
             'create_larai_model_prices_table.php.stub',
             'create_larai_settings_table.php.stub',
+            'upgrade_larai_tracker_to_v1_2_0.php.stub',
         ];
 
         foreach ($migrations as $m) {
-            $migration = include __DIR__ . '/../database/migrations/' . $m;
+            $migration = include __DIR__.'/../database/migrations/'.$m;
             $migration->up();
         }
     }

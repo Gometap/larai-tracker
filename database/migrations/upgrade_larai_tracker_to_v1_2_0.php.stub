@@ -1,0 +1,64 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        if (Schema::hasTable('larai_logs')) {
+            Schema::table('larai_logs', function (Blueprint $table) {
+                $table->decimal('cost_usd', 15, 8)->nullable()->default(null)->change();
+                $table->index('created_at', 'larai_logs_created_at_index');
+                $table->index(['provider', 'created_at'], 'larai_logs_provider_created_at_index');
+            });
+        }
+
+        if (Schema::hasTable('larai_budgets')) {
+            Schema::table('larai_budgets', function (Blueprint $table) {
+                if (!Schema::hasColumn('larai_budgets', 'currency_code')) {
+                    $table->string('currency_code', 3)->default('USD')->after('amount');
+                }
+                if (!Schema::hasColumn('larai_budgets', 'last_alert_period')) {
+                    $table->string('last_alert_period', 7)->nullable()->after('last_alerted_at');
+                }
+                if (!Schema::hasColumn('larai_budgets', 'last_alert_threshold')) {
+                    $table->integer('last_alert_threshold')->nullable()->after('last_alert_period');
+                }
+            });
+        }
+
+        if (Schema::hasTable('larai_model_prices')) {
+            Schema::table('larai_model_prices', function (Blueprint $table) {
+                if (!Schema::hasColumn('larai_model_prices', 'source_url')) {
+                    $table->string('source_url', 2048)->nullable()->after('is_custom');
+                }
+                if (!Schema::hasColumn('larai_model_prices', 'effective_date')) {
+                    $table->date('effective_date')->nullable()->after('source_url');
+                }
+                if (!Schema::hasColumn('larai_model_prices', 'catalog_version')) {
+                    $table->unsignedInteger('catalog_version')->nullable()->after('effective_date');
+                }
+            });
+        }
+
+        if (Schema::hasTable('larai_settings')) {
+            DB::table('larai_settings')->updateOrInsert(
+                ['key' => 'currency_code'],
+                ['value' => 'USD', 'updated_at' => now(), 'created_at' => now()]
+            );
+            DB::table('larai_settings')->updateOrInsert(
+                ['key' => 'currency_symbol'],
+                ['value' => '$', 'updated_at' => now(), 'created_at' => now()]
+            );
+        }
+    }
+
+    public function down(): void
+    {
+        // v1.2.0 intentionally keeps nullable costs and metadata on rollback so
+        // unknown-price records are not silently converted into zero-cost rows.
+    }
+};

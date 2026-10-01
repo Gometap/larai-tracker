@@ -1,19 +1,20 @@
 <?php
 
 use Gometap\LaraiTracker\Models\LaraiSetting;
+use Gometap\LaraiTracker\Tests\TestCase;
 
-uses(\Gometap\LaraiTracker\Tests\TestCase::class);
+uses(TestCase::class);
 
 test('it can set and get settings', function () {
     LaraiSetting::set('test_key', 'test_value');
-    
+
     expect(LaraiSetting::get('test_key'))->toBe('test_value');
 });
 
 test('it can update existing settings', function () {
     LaraiSetting::set('test_key', 'initial_value');
     LaraiSetting::set('test_key', 'updated_value');
-    
+
     expect(LaraiSetting::get('test_key'))->toBe('updated_value');
 });
 
