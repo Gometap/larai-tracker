@@ -73,16 +73,16 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                     <span>Back to Overview</span>
                 </a>
-                <a href="{{ route('larai.auth.logout') }}" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all text-slate-500 dark:text-slate-400 hover:text-red-500" title="Sign Out">
+                <form method="POST" action="{{ route('larai.auth.logout') }}">@csrf<button type="submit" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all text-slate-500 dark:text-slate-400 hover:text-red-500" title="Sign Out">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                </a>
+                </button></form>
             </div>
         </div>
         <!-- Mobile dropdown -->
         <div id="mobileMenu" class="hidden md:hidden border-t border-black/5 dark:border-white/5 px-6 py-4 flex flex-col gap-4">
             <a href="{{ route('larai.dashboard') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Overview</a>
             <a href="{{ route('larai.settings') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Settings</a>
-            <a href="{{ route('larai.auth.logout') }}" class="text-red-500 font-semibold text-sm">Sign Out</a>
+            <form method="POST" action="{{ route('larai.auth.logout') }}">@csrf<button type="submit" class="text-red-500 font-semibold text-sm">Sign Out</button></form>
         </div>
     </nav>
 
@@ -202,7 +202,7 @@
                                 </td>
                                 <td class="px-8 py-5">
                                     <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20 tabular-nums">
-                                        {{ $currency_symbol }}{{ number_format($log->cost_usd, 5) }}
+                                        @if($log->cost_usd === null) Price unavailable @else {{ $currency_symbol }}{{ number_format($log->cost_usd, 5) }} USD @endif
                                     </span>
                                 </td>
                                 <td class="px-8 py-5 text-right">

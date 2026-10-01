@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\View\Factory as ViewFactory;
 
 class LaraiAuthController extends Controller
 {
@@ -20,12 +21,17 @@ class LaraiAuthController extends Controller
             return redirect()->route('larai.dashboard');
         }
 
-        $setupRequired = $request->session()->get('setup_required', false);
-        $throttleKey   = $this->throttleKey($request);
-        $isLocked      = RateLimiter::tooManyAttempts($throttleKey, config('larai-tracker.max_attempts', 5));
-        $secondsLeft   = $isLocked ? RateLimiter::availableIn($throttleKey) : 0;
+        $setupRequired = is_null($this->getPassword());
+        $throttleKey = $this->throttleKey($request);
+        $isLocked = RateLimiter::tooManyAttempts($throttleKey, config('larai-tracker.max_attempts', 5));
+        $secondsLeft = $isLocked ? RateLimiter::availableIn($throttleKey) : 0;
 
-        return view('larai::login', compact('setupRequired', 'isLocked', 'secondsLeft'));
+        $views = app(ViewFactory::class);
+
+        return $views->file(
+            $views->getFinder()->find('larai::login'),
+            compact('setupRequired', 'isLocked', 'secondsLeft')
+        );
     }
 
     /**
@@ -52,8 +58,26 @@ class LaraiAuthController extends Controller
 
         // Initial setup: no password exists yet → set one
         if (is_null($password)) {
+            if (! app()->environment('local')) {
+                $setupToken = config('larai-tracker.setup_token');
+
+                if (! is_string($setupToken) || strlen($setupToken) < 16) {
+                    abort(403, 'Larai Tracker setup is disabled until LARAI_TRACKER_SETUP_TOKEN is configured.');
+                }
+
+                $request->validate([
+                    'setup_token' => ['required', 'string'],
+                ]);
+
+                if (! hash_equals($setupToken, (string) $request->input('setup_token'))) {
+                    return back()->withErrors([
+                        'setup_token' => 'The setup token is invalid.',
+                    ])->withInput($request->except(['password', 'password_confirmation', 'setup_token']));
+                }
+            }
+
             $request->validate([
-                'password' => 'required|min:6|confirmed',
+                'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed'],
             ]);
 
             LaraiSetting::set('dashboard_password', Hash::make($request->input('password')));
@@ -85,6 +109,7 @@ class LaraiAuthController extends Controller
 
         if ($remaining <= 0) {
             $minutes = $lockoutMins;
+
             return back()->withErrors([
                 'password' => "Too many failed attempts. Please try again in {$minutes} minute(s).",
             ]);
@@ -100,7 +125,8 @@ class LaraiAuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->session()->forget(['larai_authenticated', 'larai_auth_time']);
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('larai.auth.login');
     }
@@ -110,7 +136,7 @@ class LaraiAuthController extends Controller
      */
     protected function throttleKey(Request $request): string
     {
-        return 'larai_login|' . $request->ip();
+        return 'larai_login|'.$request->ip();
     }
 
     /**
@@ -119,12 +145,12 @@ class LaraiAuthController extends Controller
     protected function verifyPassword(string $input, string $stored): bool
     {
         // If stored password is hashed (from DB)
-        if (str_starts_with($stored, '$2y$') || str_starts_with($stored, '$2a$')) {
+        if (str_starts_with($stored, '$2') || str_starts_with($stored, '$argon2')) {
             return Hash::check($input, $stored);
         }
 
         // Plain text password (from config/env)
-        return $input === $stored;
+        return hash_equals($stored, $input);
     }
 
     /**
@@ -134,7 +160,7 @@ class LaraiAuthController extends Controller
     {
         try {
             $dbPassword = LaraiSetting::get('dashboard_password');
-            if (!is_null($dbPassword) && $dbPassword !== '') {
+            if (! is_null($dbPassword) && $dbPassword !== '') {
                 return $dbPassword;
             }
         } catch (\Exception $e) {
@@ -149,6 +175,7 @@ class LaraiAuthController extends Controller
      */
     protected function authenticate(Request $request): void
     {
+        $request->session()->regenerate();
         $request->session()->put('larai_authenticated', true);
         $request->session()->put('larai_auth_time', time());
     }
@@ -158,7 +185,7 @@ class LaraiAuthController extends Controller
      */
     protected function isAuthenticated(Request $request): bool
     {
-        if (!$request->session()->has('larai_authenticated')) {
+        if (! $request->session()->has('larai_authenticated')) {
             return false;
         }
 

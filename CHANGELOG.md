@@ -1,6 +1,44 @@
 # Changelog
 
 All notable changes to `larai-tracker` will be documented in this file.
+
+## [1.2.0] - 2026-10-01
+
+### Added
+
+- Provider fixtures and strict endpoint adapters for OpenAI Chat/Responses, Anthropic, Gemini, Azure OpenAI, and OpenRouter.
+- Owner-controlled production setup token, login throttling, session rotation, and POST-only logout.
+- Versioned price catalog provenance, nullable unknown costs, USD budget contract, and period-idempotent queued budget alerts.
+- `larai:cleanup` batched retention command, cursor-streamed exports, matching date indexes, Pint, Larastan, dependency audit, and expanded CI gates.
+- Security policy, issue templates, release policy, real product rules, v1.2 feature specification, and pricing-source documentation.
+
+### Fixed
+
+- Prevented unrelated HTTP responses with a `usage` key from being attributed to OpenAI.
+- Prevented arbitrary sort fields/directions, invalid date/settings values, chart model-name XSS, and CSV formula injection.
+- Prevented remote catalog synchronization from overwriting manual prices and rejected malformed or non-HTTPS catalogs.
+- Removed invented `$10/$30` unknown-model pricing and display-only currency symbol conversion.
+- Removed request-time retention cleanup and unbounded in-memory exports.
+
+### Upgrade notes
+
+- Publish and run the new v1.2 migration after updating. Existing custom prices and stored cost snapshots are preserved.
+- Existing non-USD display settings are normalized to USD because historical costs are stored in USD.
+- Published custom views must submit logout with POST. Schedule `php artisan larai:cleanup` if retention is enabled.
+
+## [1.1.0] - 2026-04-20
+
+### Added
+
+- Anthropic usage and pricing support.
+- Mobile improvements, toast notifications, configurable log retention, and settings/dashboard UI refinements.
+
+## [1.0.5] - 2026-03-17
+
+### Added
+
+- Dashboard date-range filtering and asynchronous chart-data updates.
+
 ## [1.0.1] - 2026-02-27
 
 ### Added

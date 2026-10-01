@@ -64,16 +64,16 @@
                     <svg id="theme-icon-light" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
                 <div class="h-6 w-px bg-black/10 dark:bg-white/10"></div>
-                <a href="{{ route('larai.auth.logout') }}" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all text-slate-500 dark:text-slate-400 hover:text-red-500" title="Sign Out">
+                <form method="POST" action="{{ route('larai.auth.logout') }}">@csrf<button type="submit" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all text-slate-500 dark:text-slate-400 hover:text-red-500" title="Sign Out">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                </a>
+                </button></form>
             </div>
         </div>
         <!-- Mobile dropdown -->
         <div id="mobileMenu" class="hidden md:hidden border-t border-black/5 dark:border-white/5 px-6 py-4 flex flex-col gap-4">
             <a href="{{ route('larai.dashboard') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Overview</a>
             <a href="{{ route('larai.logs') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Logs</a>
-            <a href="{{ route('larai.auth.logout') }}" class="text-red-500 font-semibold text-sm">Sign Out</a>
+            <form method="POST" action="{{ route('larai.auth.logout') }}">@csrf<button type="submit" class="text-red-500 font-semibold text-sm">Sign Out</button></form>
         </div>
     </nav>
 
@@ -116,12 +116,10 @@
                         </h3>
                         <div class="space-y-6">
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Currency Code (e.g. USD, VND)</label>
-                                <input type="text" name="currency[code]" value="{{ $currency['code'] }}" class="w-full glass bg-transparent px-4 py-3 rounded-xl border-black/10 dark:border-white/10 outline-none focus:ring-2 focus:ring-brand-500/50">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Currency Symbol (e.g. $, ₫)</label>
-                                <input type="text" name="currency[symbol]" value="{{ $currency['symbol'] }}" class="w-full glass bg-transparent px-4 py-3 rounded-xl border-black/10 dark:border-white/10 outline-none focus:ring-2 focus:ring-brand-500/50">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Cost & Budget Currency</label>
+                                <input type="text" name="currency[code]" value="USD" readonly class="w-full glass bg-black/[0.03] dark:bg-white/[0.03] px-4 py-3 rounded-xl border-black/10 dark:border-white/10 text-slate-500">
+                                <input type="hidden" name="currency[symbol]" value="$">
+                                <p class="mt-2 text-xs text-slate-500">v1.2 stores and compares both estimated costs and budgets in USD. Display-only symbol conversion was removed.</p>
                             </div>
                         </div>
                     </section>
@@ -241,7 +239,7 @@
                                         <th class="px-8 py-4 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-tighter text-[10px] text-right">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-black/[0.03] dark:divide-white/[0.03]">
+                                <tbody id="new-price-rows" class="divide-y divide-black/[0.03] dark:divide-white/[0.03]">
                                     @forelse($customPrices as $price)
                                     <tr class="hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors">
                                         <td class="px-8 py-5">
@@ -264,13 +262,9 @@
                                             @endif
                                         </td>
                                         <td class="px-8 py-5 text-right">
-                                            <form method="POST" action="{{ route('larai.prices.delete', $price->id) }}" onsubmit="return confirm('Delete this price entry?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-500 hover:text-red-600 transition-colors" title="Delete">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                </button>
-                                            </form>
+                                            <button type="submit" name="_method" value="DELETE" formaction="{{ route('larai.prices.delete', $price->id) }}" formnovalidate onclick="return confirm('Delete this price entry?')" class="text-red-500 hover:text-red-600 transition-colors" title="Delete">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
                                         </td>
                                     </tr>
                                     @empty
@@ -278,8 +272,7 @@
                                         <td colspan="5" class="py-20 text-center text-slate-500 font-bold tracking-widest uppercase text-xs">No models found. Click sync to fetch defaults.</td>
                                     </tr>
                                     @endforelse
-                                    <!-- New price rows inserted here by JS -->
-                                    <tbody id="new-price-rows"></tbody>
+                                    <!-- New price rows are appended here by JS. -->
                                 </tbody>
                             </table>
                         </div>

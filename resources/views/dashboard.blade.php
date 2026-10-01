@@ -203,9 +203,9 @@
                     <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                     <span class="text-slate-600 dark:text-slate-300">Live Services</span>
                 </div>
-                <a href="{{ route('larai.auth.logout') }}" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all text-slate-500 dark:text-slate-400 hover:text-red-500" title="Sign Out">
+                <form method="POST" action="{{ route('larai.auth.logout') }}">@csrf<button type="submit" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all text-slate-500 dark:text-slate-400 hover:text-red-500" title="Sign Out">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                </a>
+                </button></form>
             </div>
         </div>
         <!-- Mobile dropdown menu -->
@@ -214,7 +214,7 @@
             <a href="https://github.com/gometap/larai-tracker/blob/main/CHANGELOG.md" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Changelog</a>
             <a href="{{ route('larai.settings') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Settings</a>
             <a href="{{ route('larai.logs') }}" class="text-slate-600 dark:text-slate-400 font-semibold text-sm">Logs</a>
-            <a href="{{ route('larai.auth.logout') }}" class="text-red-500 font-semibold text-sm">Sign Out</a>
+            <form method="POST" action="{{ route('larai.auth.logout') }}">@csrf<button type="submit" class="text-red-500 font-semibold text-sm">Sign Out</button></form>
         </div>
     </nav>
 
@@ -266,7 +266,8 @@
                     <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Overall</span>
                 </div>
                 <h3 class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Total Investment</h3>
-                <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{{ $stats['currency_symbol'] }}{{ number_format($stats['total_cost'], 4) }}</p>
+                <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{{ $stats['currency_symbol'] }}{{ number_format($stats['total_cost'], 4) }} <span class="text-xs text-slate-500">USD</span></p>
+                @if($stats['unknown_cost_count'] > 0)<p class="mt-2 text-xs text-amber-600">{{ number_format($stats['unknown_cost_count']) }} call(s) excluded: price unavailable</p>@endif
                 <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
                     @if($stats['mom_change_pct'] >= 0)
                         <span class="text-red-500 font-bold">↑ {{ number_format(abs($stats['mom_change_pct']), 1) }}%</span>
@@ -479,7 +480,7 @@
                                 </td>
                                 <td class="px-8 py-5">
                                     <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20 tabular-nums">
-                                        ${{ number_format($log->cost_usd, 5) }}
+                                        @if($log->cost_usd === null) Price unavailable @else ${{ number_format($log->cost_usd, 5) }} USD @endif
                                     </span>
                                 </td>
                                 <td class="px-8 py-5 text-right">
@@ -771,19 +772,33 @@
             if (!container) return;
 
             if (models.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">No data for selected range</p>';
+                container.replaceChildren();
+                const empty = document.createElement('p');
+                empty.className = 'text-xs text-slate-500 text-center py-4';
+                empty.textContent = 'No priced data for selected range';
+                container.appendChild(empty);
                 return;
             }
 
-            container.innerHTML = models.map((model, index) => `
-                <div class="flex items-center justify-between text-xs transition-colors hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-lg">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full" style="background-color: ${modelColors[index % modelColors.length]}"></span>
-                        <span class="font-mono text-slate-600 dark:text-slate-400">${model.model}</span>
-                    </div>
-                    <span class="font-bold text-slate-900 dark:text-white">${currencySymbol}${parseFloat(model.cost).toFixed(4)}</span>
-                </div>
-            `).join('');
+            container.replaceChildren();
+            models.forEach((model, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between text-xs transition-colors hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-lg';
+                const identity = document.createElement('div');
+                identity.className = 'flex items-center gap-2';
+                const dot = document.createElement('span');
+                dot.className = 'w-2 h-2 rounded-full';
+                dot.style.backgroundColor = modelColors[index % modelColors.length];
+                const name = document.createElement('span');
+                name.className = 'font-mono text-slate-600 dark:text-slate-400';
+                name.textContent = String(model.model);
+                const cost = document.createElement('span');
+                cost.className = 'font-bold text-slate-900 dark:text-white';
+                cost.textContent = `${currencySymbol}${Number(model.cost).toFixed(4)} USD`;
+                identity.append(dot, name);
+                row.append(identity, cost);
+                container.appendChild(row);
+            });
         }
     </script>
 </body>

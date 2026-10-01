@@ -5,6 +5,8 @@ namespace Gometap\LaraiTracker\Listeners;
 use Gometap\LaraiTracker\Events\AiCallRecorded;
 use Illuminate\Http\Client\Events\ResponseReceived;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class InterceptAiResponse
 {
@@ -13,55 +15,87 @@ class InterceptAiResponse
      */
     public function handle(ResponseReceived $event): void
     {
-        $url = $event->request->url();
-        $response = $event->response->json();
+        try {
+            if (! $event->response->successful()) {
+                return;
+            }
 
-        if (!$response) {
-            return;
-        }
+            $url = $event->request->url();
+            $response = $event->response->json();
 
-        // Anthropic pattern — must be checked before the generic `usage` catch-all
-        if (str_contains($url, 'api.anthropic.com')) {
-            $this->logAnthropicFormat($response);
-            return;
-        }
+            if (! is_array($response)) {
+                return;
+            }
 
-        // Gemini pattern
-        if (str_contains($url, 'generativelanguage.googleapis.com')) {
-            $this->logGeminiFormat($url, $response);
-            return;
-        }
+            $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+            $path = (string) parse_url($url, PHP_URL_PATH);
 
-        // OpenAI / Azure OpenAI / Groq / OpenRouter pattern
-        if (str_contains($url, 'openai.com') || str_contains($url, 'openai.azure.com') || isset($response['usage'])) {
-            $this->logOpenAiFormat($url, $response);
-            return;
+            if ($host === 'api.anthropic.com' && $path === '/v1/messages') {
+                $this->logAnthropicFormat($response);
+
+                return;
+            }
+
+            if ($host === 'generativelanguage.googleapis.com' && str_contains($path, '/models/')) {
+                $this->logGeminiFormat($url, $response);
+
+                return;
+            }
+
+            if ($this->isAzureHost($host) && str_contains($path, '/openai/deployments/')) {
+                $this->logOpenAiFormat($url, $response, 'azure');
+
+                return;
+            }
+
+            if ($host === 'openrouter.ai' && $path === '/api/v1/chat/completions') {
+                $this->logOpenAiFormat($url, $response, 'openrouter');
+
+                return;
+            }
+
+            if ($host === 'api.openai.com' && in_array($path, ['/v1/chat/completions', '/v1/responses'], true)) {
+                $this->logOpenAiFormat($url, $response, 'openai');
+            }
+        } catch (Throwable $exception) {
+            Log::warning('Larai Tracker skipped an AI usage response.', [
+                'exception' => $exception::class,
+            ]);
         }
+    }
+
+    protected function isAzureHost(string $host): bool
+    {
+        return str_ends_with($host, '.openai.azure.com')
+            || str_ends_with($host, '.services.ai.azure.com');
     }
 
     /**
      * Log usage in OpenAI-compatible format.
      */
-    protected function logOpenAiFormat(string $url, array $response): void
+    protected function logOpenAiFormat(string $url, array $response, string $provider): void
     {
-        if (!isset($response['usage'])) {
+        $usage = $response['usage'] ?? null;
+        if (! is_array($usage)) {
             return;
         }
 
-        $provider = 'openai';
-        if (str_contains($url, 'azure.com')) {
-            $provider = 'azure';
-        } elseif (str_contains($url, 'openrouter.ai')) {
-            $provider = 'openrouter';
+        $tokens = $this->tokens(
+            $usage,
+            ['prompt_tokens', 'input_tokens'],
+            ['completion_tokens', 'output_tokens']
+        );
+        if ($tokens === null) {
+            return;
         }
 
-        AiCallRecorded::dispatch(
-            Auth::id(),
-            $provider,
-            $response['model'] ?? 'unknown',
-            $response['usage']['prompt_tokens'] ?? 0,
-            $response['usage']['completion_tokens'] ?? 0
-        );
+        $model = $response['model'] ?? null;
+        if ((! is_string($model) || $model === '') && $provider === 'azure') {
+            preg_match('#/deployments/([^/]+)#', (string) parse_url($url, PHP_URL_PATH), $matches);
+            $model = isset($matches[1]) ? rawurldecode($matches[1]) : 'unknown';
+        }
+
+        $this->dispatch($provider, $model, $tokens);
     }
 
     /**
@@ -73,8 +107,16 @@ class InterceptAiResponse
     {
         // Gemini returns usage in usageMetadata
         $usage = $response['usageMetadata'] ?? null;
+        if (! is_array($usage)) {
+            return;
+        }
 
-        if (!$usage) {
+        $tokens = $this->tokens(
+            $usage,
+            ['promptTokenCount'],
+            ['candidatesTokenCount', 'completionTokenCount']
+        );
+        if ($tokens === null) {
             return;
         }
 
@@ -84,13 +126,7 @@ class InterceptAiResponse
             $model = $matches[1];
         }
 
-        AiCallRecorded::dispatch(
-            Auth::id(),
-            'google',
-            $model,
-            $usage['promptTokenCount'] ?? 0,
-            $usage['candidatesTokenCount'] ?? $usage['completionTokenCount'] ?? 0
-        );
+        $this->dispatch('google', $model, $tokens);
     }
 
     /**
@@ -101,16 +137,70 @@ class InterceptAiResponse
     {
         $usage = $response['usage'] ?? null;
 
-        if (!$usage) {
+        if (! is_array($usage)) {
             return;
         }
 
+        $tokens = $this->tokens($usage, ['input_tokens'], ['output_tokens']);
+        if ($tokens === null) {
+            return;
+        }
+
+        $this->dispatch('anthropic', $response['model'] ?? null, $tokens);
+    }
+
+    protected function tokens(array $usage, array $inputKeys, array $outputKeys): ?array
+    {
+        $input = $this->firstTokenValue($usage, $inputKeys);
+        $output = $this->firstTokenValue($usage, $outputKeys);
+
+        if (! $input['valid'] || ! $output['valid'] || (! $input['found'] && ! $output['found'])) {
+            return null;
+        }
+
+        if ($input['value'] + $output['value'] > 2147483647) {
+            return null;
+        }
+
+        return [$input['value'], $output['value']];
+    }
+
+    protected function firstTokenValue(array $usage, array $keys): array
+    {
+        foreach ($keys as $key) {
+            if (! array_key_exists($key, $usage)) {
+                continue;
+            }
+
+            $value = $usage[$key];
+            if (! (is_int($value) || (is_string($value) && ctype_digit($value)))) {
+                return ['found' => true, 'valid' => false, 'value' => 0];
+            }
+
+            $value = filter_var($value, FILTER_VALIDATE_INT, [
+                'options' => ['min_range' => 0, 'max_range' => 2147483647],
+            ]);
+
+            return [
+                'found' => true,
+                'valid' => $value !== false,
+                'value' => $value === false ? 0 : $value,
+            ];
+        }
+
+        return ['found' => false, 'valid' => true, 'value' => 0];
+    }
+
+    protected function dispatch(string $provider, mixed $model, array $tokens): void
+    {
+        $model = is_string($model) && trim($model) !== '' ? trim($model) : 'unknown';
+
         AiCallRecorded::dispatch(
             Auth::id(),
-            'anthropic',
-            $response['model'] ?? 'unknown',
-            $usage['input_tokens'] ?? 0,
-            $usage['output_tokens'] ?? 0
+            $provider,
+            mb_substr($model, 0, 255),
+            $tokens[0],
+            $tokens[1]
         );
     }
 }

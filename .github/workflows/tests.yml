@@ -83,3 +83,15 @@ jobs:
 
       - name: Execute tests
         run: vendor/bin/pest
+
+      - name: Validate package metadata
+        run: composer validate --strict --no-check-publish
+
+      - name: Check code style
+        run: vendor/bin/pint --test
+
+      - name: Run static analysis
+        run: vendor/bin/phpstan analyse --memory-limit=1G
+
+      - name: Audit locked dependencies
+        run: composer audit --locked

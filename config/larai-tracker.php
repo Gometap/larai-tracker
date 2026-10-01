@@ -20,6 +20,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Initial Setup Token
+    |--------------------------------------------------------------------------
+    |
+    | Required to create the first dashboard password outside local
+    | development. Generate a long random value and remove it after setup.
+    |
+    */
+
+    'setup_token' => env('LARAI_TRACKER_SETUP_TOKEN', null),
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Lifetime (minutes)
     |--------------------------------------------------------------------------
     |
@@ -31,15 +43,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Login Rate Limiting
+    | Failed Login Lockout
     |--------------------------------------------------------------------------
     |
-    | Maximum failed login attempts before lockout. The lockout will last for
-    | the number of minutes specified in 'lockout_minutes'.
+    | In addition to the per-minute route limiter, lock an IP after this many
+    | failed passwords for the configured duration.
     |
     */
 
     'max_attempts' => 5,
-
     'lockout_minutes' => 15,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Price Catalog
+    |--------------------------------------------------------------------------
+    */
+
+    'price_catalog_url' => env(
+        'LARAI_TRACKER_PRICE_CATALOG_URL',
+        'https://raw.githubusercontent.com/gometap/larai-tracker/main/resources/data/prices.json'
+    ),
+    'price_catalog_timeout' => 5,
 ];

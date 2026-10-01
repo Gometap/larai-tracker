@@ -10,10 +10,13 @@ return new class extends Migration {
         Schema::create('larai_budgets', function (Blueprint $table) {
             $table->id();
             $table->decimal('amount', 15, 4);
+            $table->string('currency_code', 3)->default('USD');
             $table->integer('alert_threshold')->default(80); // percentage
             $table->string('recipient_email')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_alerted_at')->nullable();
+            $table->string('last_alert_period', 7)->nullable();
+            $table->integer('last_alert_threshold')->nullable();
             $table->timestamps();
         });
     }

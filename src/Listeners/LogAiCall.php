@@ -3,8 +3,14 @@
 namespace Gometap\LaraiTracker\Listeners;
 
 use Gometap\LaraiTracker\Events\AiCallRecorded;
+use Gometap\LaraiTracker\Mail\BudgetExceeded;
+use Gometap\LaraiTracker\Models\LaraiBudget;
 use Gometap\LaraiTracker\Models\LaraiLog;
 use Gometap\LaraiTracker\Services\LaraiCostCalculator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class LogAiCall
 {
@@ -17,24 +23,30 @@ class LogAiCall
      */
     public function handle(AiCallRecorded $event): void
     {
-        $cost = $this->calculator->calculate(
-            $event->provider,
-            $event->model,
-            $event->promptTokens,
-            $event->completionTokens
-        );
+        try {
+            $cost = $this->calculator->calculate(
+                $event->provider,
+                $event->model,
+                $event->promptTokens,
+                $event->completionTokens
+            );
 
-        LaraiLog::create([
-            'user_id' => $event->userId,
-            'provider' => $event->provider,
-            'model' => $event->model,
-            'prompt_tokens' => $event->promptTokens,
-            'completion_tokens' => $event->completionTokens,
-            'total_tokens' => $event->promptTokens + $event->completionTokens,
-            'cost_usd' => $cost,
-        ]);
+            LaraiLog::create([
+                'user_id' => $event->userId,
+                'provider' => $event->provider,
+                'model' => $event->model,
+                'prompt_tokens' => $event->promptTokens,
+                'completion_tokens' => $event->completionTokens,
+                'total_tokens' => $event->promptTokens + $event->completionTokens,
+                'cost_usd' => $cost,
+            ]);
 
-        $this->checkBudget();
+            $this->checkBudget();
+        } catch (Throwable $exception) {
+            Log::warning('Larai Tracker could not record AI usage.', [
+                'exception' => $exception::class,
+            ]);
+        }
     }
 
     /**
@@ -43,32 +55,56 @@ class LogAiCall
     protected function checkBudget(): void
     {
         try {
-            $budget = \Gometap\LaraiTracker\Models\LaraiBudget::where('is_active', true)->first();
-            
-            if (!$budget || !$budget->recipient_email) {
+            $alert = DB::transaction(function () {
+                $budget = LaraiBudget::where('is_active', true)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $budget || ! $budget->recipient_email || $budget->currency_code !== 'USD' || (float) $budget->amount <= 0) {
+                    return null;
+                }
+
+                $period = now()->format('Y-m');
+                if ($budget->last_alert_period === $period
+                    && $budget->last_alert_threshold === $budget->alert_threshold) {
+                    return null;
+                }
+
+                $currentCost = LaraiLog::whereBetween('created_at', [
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                ])->sum('cost_usd');
+                $thresholdAmount = ((float) $budget->amount * $budget->alert_threshold) / 100;
+
+                if ($currentCost < $thresholdAmount) {
+                    return null;
+                }
+
+                $budget->update([
+                    'last_alerted_at' => now(),
+                    'last_alert_period' => $period,
+                    'last_alert_threshold' => $budget->alert_threshold,
+                ]);
+
+                return [$budget, $currentCost];
+            });
+
+            if ($alert === null) {
                 return;
             }
 
-            // Don't alert more than once every 24 hours
-            if ($budget->last_alerted_at && $budget->last_alerted_at->gt(now()->subDay())) {
-                return;
+            [$budget, $currentCost] = $alert;
+            $mailable = new BudgetExceeded($budget, $currentCost, '$');
+
+            if (config('queue.default', 'sync') === 'sync') {
+                Mail::to($budget->recipient_email)->send($mailable);
+            } else {
+                Mail::to($budget->recipient_email)->queue($mailable);
             }
-
-            $currentCost = LaraiLog::whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->sum('cost_usd');
-
-            $thresholdAmount = ($budget->amount * $budget->alert_threshold) / 100;
-
-            if ($currentCost >= $thresholdAmount) {
-                $symbol = \Gometap\LaraiTracker\Models\LaraiSetting::get('currency_symbol', '$');
-                \Illuminate\Support\Facades\Mail::to($budget->recipient_email)
-                    ->send(new \Gometap\LaraiTracker\Mail\BudgetExceeded($budget, $currentCost, $symbol));
-
-                $budget->update(['last_alerted_at' => now()]);
-            }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Larai Tracker Budget Failure: ' . $e->getMessage());
+        } catch (Throwable $exception) {
+            Log::warning('Larai Tracker budget alert failed.', [
+                'exception' => $exception::class,
+            ]);
         }
     }
 }

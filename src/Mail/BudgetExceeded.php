@@ -11,7 +11,9 @@ class BudgetExceeded extends Mailable
     use Queueable, SerializesModels;
 
     public $budget;
+
     public $currentCost;
+
     public $currencySymbol;
 
     public function __construct($budget, $currentCost, $currencySymbol = '$')
@@ -31,14 +33,14 @@ class BudgetExceeded extends Mailable
                     <p>This is an automated alert from <strong>Larai Tracker</strong>.</p>
                     <p>Your AI spending has reached the defined alert threshold:</p>
                     <ul style='list-style: none; padding: 0;'>
-                        <li><strong>Planned Budget:</strong> {$this->currencySymbol}{$this->budget->amount}</li>
+                        <li><strong>Planned Budget:</strong> {$this->currencySymbol}{$this->budget->amount} USD</li>
                         <li><strong>Alert Threshold:</strong> {$this->budget->alert_threshold}%</li>
-                        <li><strong>Current Spending (This Month):</strong> <span style='color: #ef4444; font-weight: bold;'>{$this->currencySymbol}{$this->currentCost}</span></li>
+                        <li><strong>Current Spending (This Month):</strong> <span style='color: #ef4444; font-weight: bold;'>{$this->currencySymbol}{$this->currentCost} USD</span></li>
                     </ul>
-                    <p style='margin-top: 20px;'>Please check your <a href='" . route('larai.dashboard') . "'>Larai Dashboard</a> for more details.</p>
+                    <p style='margin-top: 20px;'>Please check your <a href='".route('larai.dashboard')."'>Larai Dashboard</a> for more details.</p>
                     <hr style='border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;'>
-                    <p style='font-size: 12px; color: #64748b;'>&copy; " . date('Y') . " Gometap Group - Larai Tracker</p>
+                    <p style='font-size: 12px; color: #64748b;'>&copy; ".date('Y').' Gometap Group - Larai Tracker</p>
                 </div>
-            ");
+            ');
     }
 }

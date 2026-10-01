@@ -4,6 +4,10 @@ namespace Gometap\LaraiTracker\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property string $key
+ * @property string|null $value
+ */
 class LaraiSetting extends Model
 {
     protected $table = 'larai_settings';
@@ -13,6 +17,7 @@ class LaraiSetting extends Model
     public static function get(string $key, $default = null)
     {
         $setting = self::where('key', $key)->first();
+
         return $setting ? $setting->value : $default;
     }
 
