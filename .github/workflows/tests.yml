@@ -19,11 +19,13 @@ jobs:
             testbench: "^8.0"
             pest: "^2.34"
             pest_laravel: "^2.3"
+            composer_flags: "--no-security-blocking"
           - php: 8.3
             laravel: "10.*"
             testbench: "^8.0"
             pest: "^2.34"
             pest_laravel: "^2.3"
+            composer_flags: "--no-security-blocking"
 
           # Laravel 11 (PHP 8.2 - 8.4) → Testbench 9, Pest 2
           - php: 8.2
@@ -31,16 +33,19 @@ jobs:
             testbench: "^9.0"
             pest: "^2.34"
             pest_laravel: "^2.3"
+            composer_flags: "--no-security-blocking"
           - php: 8.3
             laravel: "11.*"
             testbench: "^9.0"
             pest: "^2.34"
             pest_laravel: "^2.3"
+            composer_flags: "--no-security-blocking"
           - php: 8.4
             laravel: "11.*"
             testbench: "^9.0"
             pest: "^2.34"
             pest_laravel: "^2.3"
+            composer_flags: "--no-security-blocking"
 
           # Laravel 12 (PHP 8.3 - 8.4) → Testbench 10, Pest 3
           - php: 8.3
@@ -48,11 +53,13 @@ jobs:
             testbench: "^10.0"
             pest: "^3.0"
             pest_laravel: "^3.0"
+            composer_flags: ""
           - php: 8.4
             laravel: "12.*"
             testbench: "^10.0"
             pest: "^3.0"
             pest_laravel: "^3.0"
+            composer_flags: ""
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }}
 
@@ -76,6 +83,7 @@ jobs:
       - name: Install dependencies
         run: |
           composer update --prefer-dist --no-interaction --prefer-stable \
+            ${{ matrix.composer_flags }} \
             --with "laravel/framework:${{ matrix.laravel }}" \
             --with "orchestra/testbench:${{ matrix.testbench }}" \
             --with "pestphp/pest:${{ matrix.pest }}" \
@@ -93,5 +101,14 @@ jobs:
       - name: Run static analysis
         run: vendor/bin/phpstan analyse --memory-limit=1G
 
-      - name: Audit locked dependencies
+      - name: Audit supported dependencies
+        if: matrix.laravel == '12.*'
+        run: composer audit --locked
+
+      # Laravel 10 and 11 are retained for compatibility testing after upstream
+      # security support ended. Surface their advisories without hiding them or
+      # preventing the compatibility suite from running.
+      - name: Report legacy framework advisories
+        if: matrix.laravel != '12.*'
+        continue-on-error: true
         run: composer audit --locked

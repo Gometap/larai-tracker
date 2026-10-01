@@ -149,6 +149,12 @@ class InterceptAiResponse
         $this->dispatch('anthropic', $response['model'] ?? null, $tokens);
     }
 
+    /**
+     * @param  array<string, mixed>  $usage
+     * @param  array<int, string>  $inputKeys
+     * @param  array<int, string>  $outputKeys
+     * @return array{0: int, 1: int}|null
+     */
     protected function tokens(array $usage, array $inputKeys, array $outputKeys): ?array
     {
         $input = $this->firstTokenValue($usage, $inputKeys);
@@ -165,6 +171,11 @@ class InterceptAiResponse
         return [$input['value'], $output['value']];
     }
 
+    /**
+     * @param  array<string, mixed>  $usage
+     * @param  array<int, string>  $keys
+     * @return array{found: bool, valid: bool, value: int}
+     */
     protected function firstTokenValue(array $usage, array $keys): array
     {
         foreach ($keys as $key) {

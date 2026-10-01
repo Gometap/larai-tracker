@@ -4,6 +4,15 @@ This document records the history of code changes made by AI Agents. Each entry 
 
 ---
 
+## [2026-10-01] Restore Laravel 10/11 CI compatibility coverage (Codex)
+- **Summary:** Fixed five GitHub Actions jobs that stopped before executing tests after Composer began blocking installation of Laravel 10/11 releases affected by upstream security advisories, then fixed the Laravel 10 migration incompatibility exposed by the restored matrix.
+- **Files Changed:**
+  - `[MODIFY] .github/workflows/tests.yml`
+  - `[MODIFY] composer.json, composer.lock`
+  - `[MODIFY] docs/CHANGELOG_AI.md`
+- **Technical Details:** Added Composer's scoped `--no-security-blocking` flag only to the Laravel 10/11 compatibility matrix entries. Dependency auditing remains blocking for supported Laravel 12 jobs, while legacy jobs still run `composer audit` as a visible non-blocking report. Added Doctrine DBAL 3/4 as a runtime dependency because Laravel 10 requires DBAL 3 for the v1.2 migration's nullable `cost_usd` column change, while Laravel 12 resolves DBAL 4; this keeps legacy data intact across supported database engines without unsafe vendor-specific table rewrites. Added precise token array shapes so Larastan 2/PHPStan 1 used by the Laravel 10 matrix can prove arithmetic safety. No advisory is ignored in package metadata.
+- **Verification Results:** `composer check` passed on Laravel 10, 11, and 12 dependency sets (52 tests, 115 assertions each; Pint and Larastan/PHPStan clean). Strict Composer validation, locked Laravel 12 dependency audit, workflow YAML parsing, and `git diff --check` passed. GitHub Actions verification is triggered by the push below.
+
 ## [2026-10-01] v1.2.0 security, accuracy, and scalability release (Codex)
 - **Summary:** Implemented the v1.2.0 roadmap as a backward-compatible release candidate. Fixed dashboard bootstrap/authentication weaknesses, untrusted input paths, false provider attribution, misleading unknown-model costs/currency, custom-price overwrite, unbounded exports, request-time cleanup, duplicate budget alerts, and the broken public facade.
 - **Files Changed:**
